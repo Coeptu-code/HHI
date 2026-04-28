@@ -29,11 +29,11 @@ def create_questionnaire_link(request):
             }
         )
 
-    return render(request, "questionnaires/create_link.html", {"form": form})
+    return render(request, "questionnaires/create_link.html", {"form": form, "active_nav": "links"})
 
 
 @login_required
 def link_created(request, link_id: int):
     link = get_object_or_404(QuestionnaireLink, id=link_id, agent__user=request.user)
     intake_url = request.build_absolute_uri(reverse("intake_entry", args=[link.token]))
-    return render(request, "questionnaires/link_created.html", {"link": link, "intake_url": intake_url})
+    return render(request, "questionnaires/link_created.html", {"link": link, "intake_url": intake_url, "active_nav": "links"})

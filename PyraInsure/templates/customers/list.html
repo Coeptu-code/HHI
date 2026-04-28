@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Customers{% endblock %}
+{% block page_title %}Customers{% endblock %}
+
+{% block content %}
+  {% if customers %}
+    <div class="card card-pad">
+      <table class="tbl" style="width: 100%;">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>State</th>
+            <th>Last submission</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for customer in customers %}
+            {% with last_submission=customer.intakesubmission_set.first %}
+              <tr>
+                <td style="font-size: 13px;">{{ customer.first_name }} {{ customer.last_name }}</td>
+                <td style="font-size: 13px;">{{ customer.email|default:"-" }}</td>
+                <td style="font-size: 13px;">{{ customer.phone|default:"-" }}</td>
+                <td style="font-size: 13px;">{{ customer.state|default:"-" }}</td>
+                <td style="font-size: 13px;">{% if last_submission %}{{ last_submission.created_at|date:"M j, Y" }}{% else %}-{% endif %}</td>
+                <td style="text-align: right;">
+                  <a href="{% url 'customer_detail' customer.id %}" class="btn sm outline">View</a>
+                </td>
+              </tr>
+            {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="card card-pad">
+      <p class="muted" style="margin: 0; text-align: center; font-size: 13px;">No customers yet.</p>
+    </div>
+  {% endif %}
+{% endblock %}

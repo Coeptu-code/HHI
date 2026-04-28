@@ -876,5 +876,6 @@ def pre_call_summary(request: HttpRequest, submission_id: int) -> HttpResponse:
         "household_members": household_members,
         "household_summaries": household_summaries,
         "talking_points": talking_points,
+        "active_nav": "",
     }
     return render(request, "summaries/pre_call_summary.html", context)

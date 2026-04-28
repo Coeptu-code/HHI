@@ -54,5 +54,6 @@ def dashboard(request):
         "referral_count": referral_count,
         "avg_coverage_score": avg_coverage_score,
         "recent_links": recent_links,
+        "active_nav": "home",
     }
     return render(request, "dashboard/index.html", context)
