@@ -1,0 +1,39 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#6d28d9" />
+    <title>{% block title %}Hutchins Intake{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/intake.css' %}" />
+  </head>
+  <body>
+    <div class="intake-shell">
+      <header class="intake-header">
+        <div class="brand" aria-label="Hutchins Health Insurance">
+          <div class="brand-mark" aria-hidden="true">H</div>
+          <div class="brand-text">
+            <div class="brand-name">Hutchins</div>
+            <div class="brand-sub">Secure intake - 3-5 minutes</div>
+          </div>
+        </div>
+        {% block header_right %}{% endblock %}
+      </header>
+
+      <main>
+        <section class="intake-card" data-intake-autofocus>
+          {% block card_top %}{% endblock %}
+          {% block content %}{% endblock %}
+        </section>
+      </main>
+
+      <footer class="intake-footer">
+        <small>We only use this info to prepare for your conversation.</small>
+      </footer>
+    </div>
+
+    <script src="{% static 'js/intake.js' %}"></script>
+    {% block extra_scripts %}{% endblock %}
+  </body>
+</html>

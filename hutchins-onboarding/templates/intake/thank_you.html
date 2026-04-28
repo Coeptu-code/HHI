@@ -1,0 +1,16 @@
+{% extends "intake/public_base.html" %}
+
+{% block title %}Thank You - Hutchins Intake{% endblock %}
+
+{% block content %}
+  <h1>All set - thanks!</h1>
+  <p class="subtle">Your intake is submitted. Your agent will review it before (or during) your consultation.</p>
+  {% if score_url %}
+    <div class="inline-card">
+      <h2>Want to see your CoveraGap&trade; Score?</h2>
+      <p class="subtle">It's an educational snapshot based on your answers.</p>
+      <a class="button" href="{{ score_url }}">View my score</a>
+    </div>
+  {% endif %}
+  <p class="subtle" style="margin-top: 16px;">You may now close this page.</p>
+{% endblock %}

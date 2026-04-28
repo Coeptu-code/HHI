@@ -1,0 +1,224 @@
+{% extends "crm/base_crm.html" %}
+{% load static %}
+
+{% block crm_content %}
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+            <div>
+              <h4 class="card-title">{{ client.full_name }}</h4>
+              <p class="card-category">Client Detail</p>
+            </div>
+            <div>
+              <a class="btn btn-primary btn-round" href="{% url 'crm:client-scan' client.id %}">Scan Document</a>
+              <a class="btn btn-secondary btn-round" href="{% url 'crm:client-edit' client.id %}">Edit</a>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6"><p><strong>DOB:</strong> {% if client.dob %}{{ client.dob|date:"m/d/Y" }}{% endif %}</p></div>
+            <div class="col-md-6"><p><strong>Phone:</strong> {{ client.phone_number }}</p></div>
+          </div>
+          <div class="row">
+            <div class="col-md-6"><p><strong>Email:</strong> {{ client.email }}</p></div>
+            <div class="col-md-6"><p><strong>Income:</strong> {{ client.income }}</p></div>
+          </div>
+          <div class="row">
+            <div class="col-md-12"><p><strong>Address:</strong> {{ client.address }}</p></div>
+          </div>
+          <div class="row">
+            <div class="col-md-4"><p><strong>City:</strong> {{ client.city }}</p></div>
+            <div class="col-md-4"><p><strong>State:</strong> {{ client.state }}</p></div>
+            <div class="col-md-4"><p><strong>ZIP:</strong> {{ client.zip_code }}</p></div>
+          </div>
+          {% if client.notes %}
+            <div class="row">
+              <div class="col-md-12">
+                <p><strong>Notes:</strong><br>{{ client.notes|linebreaksbr }}</p>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h5 class="title">Client Attachments</h5>
+        </div>
+        <div class="card-body">
+          {% if attachments_data %}
+            <div class="client-attachments-list">
+              {% for attachment in attachments_data %}
+                <div class="client-attachment-row">
+                  <div class="client-attachment-title-row">
+                    <a
+                      class="client-attachment-title js-open-attachment"
+                      href="{{ attachment.first_page_url|default:'#' }}"
+                      data-attachment-id="{{ attachment.id }}"
+                      data-page-number="1"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {{ attachment.display_name }}
+                    </a>
+                    <button
+                      type="button"
+                      class="btn btn-link btn-sm js-open-attachment"
+                      data-attachment-id="{{ attachment.id }}"
+                      data-page-number="1"
+                      aria-label="Open attachment viewer"
+                      title="Open"
+                    >
+                      View
+                    </button>
+                  </div>
+
+                  <div class="text-muted client-attachment-meta">
+                    Type: {{ attachment.document_type_label }}
+                    &middot; Pages: {{ attachment.page_count }}
+                    {% if attachment.created_at_display %}&middot; {{ attachment.created_at_display }}{% endif %}
+                  </div>
+
+                  {% if attachment.pages %}
+                    <div class="client-attachment-pages">
+                      {% for page in attachment.pages %}
+                        <a
+                          class="client-attachment-page-pill js-open-attachment-page"
+                          href="{{ page.url }}"
+                          data-attachment-id="{{ attachment.id }}"
+                          data-page-number="{{ page.page_number }}"
+                          title="Open page {{ page.page_number }}"
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Page {{ page.page_number }}
+                        </a>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p>No client attachments uploaded yet.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="title">Policies</h5>
+        </div>
+        <div class="card-body">
+          {% for doc in client.policy_documents.all %}
+            <p>
+              <a href="{% url 'crm:policy-detail' doc.id %}">Policy #{{ doc.id }}</a>
+              {% if doc.file %}<br><a href="{{ doc.file.url }}" target="_blank" rel="noreferrer">{{ doc.original_filename|default:doc.file.name }}</a>{% endif %}
+              {% if doc.page_count %}<br><small>Pages: {{ doc.page_count }}</small>{% endif %}
+            </p>
+          {% empty %}
+            <p>No policies uploaded.</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h5 class="title">Handwritten Notes</h5>
+        </div>
+        <div class="card-body">
+          {% for note in client.handwritten_notes.all %}
+            <p>
+              <a href="{% url 'crm:handwritten-note-review' note.id %}">Review Note #{{ note.id }}</a>
+              {% if note.uploaded_file %}<br><a href="{{ note.uploaded_file.url }}" target="_blank" rel="noreferrer">{{ note.original_filename|default:note.uploaded_file.name }}</a>{% endif %}
+            </p>
+          {% empty %}
+            <p>No handwritten notes uploaded.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="attachment-viewer-backdrop" id="attachmentViewerBackdrop" aria-hidden="true"></div>
+  <aside class="attachment-viewer" id="attachmentViewer" aria-hidden="true" aria-label="Attachment viewer">
+    <div class="attachment-viewer-header">
+      <div class="attachment-viewer-titles">
+        <div class="attachment-viewer-title" id="attachmentViewerTitle">Attachment</div>
+        <div class="attachment-viewer-meta" id="attachmentViewerMeta"></div>
+      </div>
+      <div class="attachment-viewer-header-actions">
+        <button
+          type="button"
+          class="attachment-viewer-fs"
+          id="attachmentViewerFullscreen"
+          aria-label="Full screen"
+          title="Full screen"
+        >
+          ⤢
+        </button>
+        <button type="button" class="attachment-viewer-close" id="attachmentViewerClose" aria-label="Close viewer" title="Close">
+          &times;
+        </button>
+      </div>
+    </div>
+
+    <div class="attachment-viewer-body" id="attachmentViewerBody">
+      <div class="attachment-viewer-stage" id="attachmentViewerStage">
+        <div class="attachment-viewer-empty" id="attachmentViewerEmpty">Select a page to view.</div>
+        <img class="attachment-viewer-image" id="attachmentViewerImage" alt="Attachment page" />
+        <iframe class="attachment-viewer-frame" id="attachmentViewerFrame" title="Attachment preview"></iframe>
+      </div>
+
+      <button
+        type="button"
+        class="attachment-viewer-arrow left"
+        id="attachmentViewerArrowLeft"
+        aria-label="Previous page"
+        title="Previous page"
+      >
+        ‹
+      </button>
+      <button
+        type="button"
+        class="attachment-viewer-arrow right"
+        id="attachmentViewerArrowRight"
+        aria-label="Next page"
+        title="Next page"
+      >
+        ›
+      </button>
+    </div>
+
+    <div class="attachment-viewer-footer">
+      <div class="attachment-viewer-footer-row">
+        <button type="button" class="attachment-viewer-nav" id="attachmentViewerPrev" aria-label="Previous page" title="Previous">
+          &larr;
+        </button>
+        <div class="attachment-viewer-counter" id="attachmentViewerCounter">0 / 0</div>
+        <button type="button" class="attachment-viewer-nav" id="attachmentViewerNext" aria-label="Next page" title="Next">
+          &rarr;
+        </button>
+
+        <div class="attachment-viewer-zoom" aria-label="Zoom controls">
+          <button type="button" class="attachment-viewer-zoom-btn" id="attachmentViewerZoomOut" aria-label="Zoom out" title="Zoom out">−</button>
+          <button type="button" class="attachment-viewer-zoom-btn" id="attachmentViewerZoomReset" aria-label="Fit to screen" title="Fit to screen">Fit</button>
+          <button type="button" class="attachment-viewer-zoom-btn" id="attachmentViewerZoomIn" aria-label="Zoom in" title="Zoom in">+</button>
+        </div>
+      </div>
+
+      <a class="attachment-viewer-open" id="attachmentViewerOpen" href="#" target="_blank" rel="noreferrer" title="Open in new tab">
+        Open
+      </a>
+    </div>
+  </aside>
+
+  {{ attachments_data|json_script:"client-attachments-data" }}
+  <link rel="stylesheet" href="{% static 'css/client_attachment_viewer.css' %}">
+  <script src="{% static 'js/client_attachment_viewer.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,23 @@
+<div class="card dashboard-card" id="card-{{ card.key }}">
+  <div class="card-header">
+    <div class="dashboard-card-header">
+      <div class="dashboard-card-titles">
+        <h4 class="card-title">{{ card.title }}</h4>
+        {% if card.subtitle %}<p class="card-category">{{ card.subtitle }}</p>{% endif %}
+      </div>
+      {% if card.metric %}
+        <div class="dashboard-card-metric" aria-label="Summary metric">{{ card.metric }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card-body">
+    {% include card.body_template %}
+  </div>
+
+  {% if card.action_url_name and card.action_label %}
+    <div class="card-footer dashboard-card-footer">
+      <a class="btn btn-secondary btn-round" href="{% url card.action_url_name %}">{{ card.action_label }}</a>
+    </div>
+  {% endif %}
+</div>

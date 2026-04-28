@@ -1,0 +1,122 @@
+.dashboard-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dashboard-card-metric {
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 999px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(37, 99, 235, 0.10);
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  font-weight: 800;
+}
+
+.dashboard-card-footer {
+  padding: 0 16px 16px 16px;
+}
+
+.dashboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.dashboard-chart-wrap {
+  width: 100%;
+}
+
+.dashboard-bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 150px;
+  padding-top: 6px;
+}
+
+.dashboard-bar-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.dashboard-bar {
+  width: 100%;
+  height: calc(var(--pct) * 1%);
+  min-height: 2px;
+  border-radius: 10px 10px 6px 6px;
+  background: var(--bd-primary, #1d8cf8);
+  opacity: 0.95;
+}
+
+.dashboard-bar-value {
+  font-size: 12px;
+  color: var(--bd-text, rgba(255, 255, 255, 0.86));
+}
+
+.dashboard-bar-label {
+  font-size: 11px;
+  color: var(--bd-text, rgba(255, 255, 255, 0.78));
+}
+
+.dashboard-bar-sublabel {
+  font-size: 10px;
+  color: var(--bd-muted, rgba(255, 255, 255, 0.62));
+}
+
+.dashboard-chart-foot {
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.dashboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dashboard-list-item {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(100, 116, 139, 0.22);
+  background: rgba(100, 116, 139, 0.06);
+  text-decoration: none;
+  color: inherit;
+}
+
+.dashboard-list-item:active {
+  transform: scale(0.99);
+}
+
+.dashboard-list-title {
+  font-weight: 700;
+}
+
+.dashboard-list-sub {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--bd-muted, rgba(255, 255, 255, 0.70));
+}
+
+.dashboard-empty-note {
+  padding: 6px 0 0 0;
+  font-size: 12px;
+}
+
+@media (max-width: 767px) {
+  .dashboard-bar-chart {
+    gap: 8px;
+    height: 130px;
+  }
+}

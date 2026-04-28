@@ -1,0 +1,304 @@
+/*
+  Minimal styling so the CRM remains usable before the real Creative Tim
+  Black Dashboard assets are added to static/.
+*/
+
+:root {
+  /* Light (white) default */
+  --bd-bg: #ffffff;
+  --bd-panel: #f8fafc;
+  --bd-card: #ffffff;
+  --bd-text: #0f172a;
+  --bd-muted: #64748b;
+  --bd-border: #e5e7eb;
+  --bd-primary: #2563eb;
+}
+
+body {
+  background: var(--bd-bg);
+  color: var(--bd-text);
+}
+
+a {
+  color: var(--bd-primary);
+}
+
+.wrapper {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 260px;
+  background: var(--bd-panel);
+  border-right: 1px solid var(--bd-border);
+}
+
+.sidebar .logo {
+  padding: 16px;
+  border-bottom: 1px solid var(--bd-border);
+}
+
+.sidebar .logo a {
+  color: var(--bd-text);
+  text-decoration: none;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.sidebar .nav {
+  list-style: none;
+  margin: 0;
+  padding: 12px;
+}
+
+.sidebar .nav li a {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--bd-text);
+  text-decoration: none;
+}
+
+.sidebar .nav li.active a {
+  background: rgba(37, 99, 235, 0.10);
+}
+
+.main-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.navbar {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--bd-border);
+}
+
+.navbar .navbar-brand {
+  color: var(--bd-text);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.content {
+  padding: 18px;
+}
+
+.container-fluid {
+  width: 100%;
+}
+
+.card {
+  background: var(--bd-card);
+  border: 1px solid var(--bd-border);
+  border-radius: 14px;
+  margin-bottom: 18px;
+}
+
+.card-header,
+.card-body {
+  padding: 16px;
+}
+
+.card-title,
+.title {
+  margin: 0;
+}
+
+.card-category {
+  margin: 6px 0 0;
+  color: var(--bd-muted);
+}
+
+.form-control,
+input[type="text"],
+input[type="email"],
+input[type="file"],
+select,
+textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 1px solid var(--bd-border);
+  color: var(--bd-text);
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+label {
+  display: inline-block;
+  margin-bottom: 6px;
+  color: var(--bd-muted);
+}
+
+.btn {
+  display: inline-block;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--bd-border);
+  background: #ffffff;
+  color: var(--bd-text);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn-round {
+  border-radius: 999px;
+}
+
+.text-muted {
+  color: var(--bd-muted);
+}
+
+.form-text {
+  display: block;
+  margin-top: 6px;
+  color: var(--bd-muted);
+  font-size: 0.9rem;
+}
+
+.active-field {
+  outline: 2px solid rgba(59, 130, 246, 0.65);
+  outline-offset: 2px;
+}
+
+.btn.btn-primary {
+  background: var(--bd-primary);
+  border-color: rgba(59, 130, 246, 0.55);
+}
+
+.btn.btn-info {
+  background: #06b6d4;
+  border-color: rgba(6, 182, 212, 0.55);
+}
+
+.btn.btn-block {
+  width: 100%;
+  text-align: center;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+table.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table.table th,
+table.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--bd-border);
+  vertical-align: top;
+}
+
+table.table thead th {
+  color: var(--bd-muted);
+  font-weight: 600;
+}
+
+.alert {
+  border: 1px solid var(--bd-border);
+  background: rgba(37, 99, 235, 0.10);
+  color: var(--bd-text);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+/* Minimal grid + helpers (Bootstrap-ish) */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-left: -8px;
+  margin-right: -8px;
+}
+
+[class^="col-"],
+[class*=" col-"] {
+  padding-left: 8px;
+  padding-right: 8px;
+  box-sizing: border-box;
+}
+
+.col-12 {
+  flex: 0 0 100%;
+  max-width: 100%;
+}
+
+.col-md-3,
+.col-md-4,
+.col-md-6,
+.col-md-8,
+.col-md-12 {
+  flex: 0 0 100%;
+  max-width: 100%;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.mb-4 {
+  margin-bottom: 16px;
+}
+
+.mt-3 {
+  margin-top: 12px;
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+@media (min-width: 768px) {
+  .col-md-3 {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+  .col-md-4 {
+    flex: 0 0 33.3333%;
+    max-width: 33.3333%;
+  }
+  .col-md-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+  .col-md-8 {
+    flex: 0 0 66.6667%;
+    max-width: 66.6667%;
+  }
+  .col-md-12 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 991px) {
+  .sidebar {
+    display: block;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 1050;
+    transform: translateX(-105%);
+    transition: transform 160ms ease;
+  }
+
+  body.sidebar-open .sidebar {
+    transform: translateX(0);
+  }
+
+  .main-panel {
+    width: 100%;
+  }
+}

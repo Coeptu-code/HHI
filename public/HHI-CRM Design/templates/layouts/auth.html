@@ -1,0 +1,30 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}HHI CRM{% endblock %}</title>
+
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <link rel="stylesheet" href="{% static 'css/black-dashboard-fallback.css' %}">
+    <link rel="stylesheet" href="{% static 'black-dashboard/css/nucleo-icons.css' %}">
+    <link rel="stylesheet" href="{% static 'black-dashboard/css/black-dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/theme_overrides.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+    {% block extra_css %}{% endblock %}
+  </head>
+  <body class="auth-page">
+    <div class="auth-shell">
+      {% block content %}{% endblock %}
+    </div>
+
+    <script src="{% static 'js/app.js' %}"></script>
+    <script src="{% static 'black-dashboard/js/core/jquery.min.js' %}"></script>
+    <script src="{% static 'black-dashboard/js/core/popper.min.js' %}"></script>
+    <script src="{% static 'black-dashboard/js/core/bootstrap.min.js' %}"></script>
+    <script src="{% static 'black-dashboard/js/black-dashboard.min.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>
+

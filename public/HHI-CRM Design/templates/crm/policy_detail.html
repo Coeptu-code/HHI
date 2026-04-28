@@ -1,0 +1,43 @@
+{% extends "crm/base_crm.html" %}
+
+{% block crm_content %}
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="card-title">Policy #{{ policy.id }}</h4>
+          <p class="card-category">Stored as a single viewable document</p>
+        </div>
+        <div class="card-body">
+          {% if policy.file %}
+            <p><strong>File:</strong> <a href="{{ policy.file.url }}" target="_blank" rel="noreferrer">{{ policy.original_filename|default:policy.file.name }}</a></p>
+          {% endif %}
+          <p><strong>Pages:</strong> {{ policy.page_count }}</p>
+
+          {% if policy.notes %}
+            <hr>
+            <h5 class="title">Notes</h5>
+            <p>{{ policy.notes|linebreaksbr }}</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      {% if policy.sources.count %}
+        <div class="card">
+          <div class="card-header">
+            <h5 class="title">Original uploads</h5>
+          </div>
+          <div class="card-body">
+            <ul>
+              {% for src in policy.sources.all %}
+                <li>Page {{ src.page_number }}: <a href="{{ src.file.url }}" target="_blank" rel="noreferrer">{{ src.original_filename|default:src.file.name }}</a></li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

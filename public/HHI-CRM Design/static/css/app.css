@@ -1,0 +1,12 @@
+/* Placeholder styles.
+   Replace with your Creative Tim dashboard CSS bundle. */
+
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: #111827;
+}
+
+input,
+button {
+  font: inherit;
+}

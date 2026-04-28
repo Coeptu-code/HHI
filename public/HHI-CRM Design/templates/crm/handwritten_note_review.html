@@ -1,0 +1,40 @@
+{% extends "crm/base_crm.html" %}
+{% block crm_content %}
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+            <div>
+              <h4 class="card-title">Handwritten Note #{{ note.id }}</h4>
+              <p class="card-category">View and update note details</p>
+            </div>
+            <div>
+              {% if note.client_id %}
+                <a class="btn btn-secondary btn-round" href="{% url 'crm:client-detail' note.client_id %}">Back to Client</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body">
+          {% if note.uploaded_file %}
+            <p>
+              <strong>File:</strong>
+              <a href="{{ note.uploaded_file.url }}" target="_blank" rel="noreferrer">{{ note.original_filename|default:note.uploaded_file.name }}</a>
+            </p>
+          {% endif %}
+
+          <form method="post" action="{% url 'crm:handwritten-note-review' note.id %}">
+            {% csrf_token %}
+            <div class="form-group">
+              <label>Notes</label>
+              <textarea class="form-control" name="notes" rows="5">{{ note.notes|default:'' }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-round">Save</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

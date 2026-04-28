@@ -1,0 +1,20 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Dashboard | HHI CRM{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/dashboard_cards.css' %}">
+{% endblock %}
+
+{% block content %}
+  <div class="row">
+    {% for card in dashboard_cards %}
+      <div class="col-lg-6 col-md-12">
+        {% include "dashboard/includes/card.html" with card=card %}
+      </div>
+    {% endfor %}
+  </div>
+
+  {# TODO (future cards): Recent Clients, Missing Documents, Recent Attachments, Follow-Up Needed, Monthly Growth, Upcoming Birthdays, Incomplete Profiles, Document Capture Activity. #}
+{% endblock %}

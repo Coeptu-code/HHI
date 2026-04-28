@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Customer{% endblock %}
+
+{% block content %}
+  <h1>Customer</h1>
+
+  <p>
+    <strong>{{ customer.first_name }} {{ customer.last_name }}</strong><br />
+    {% if customer.email %}Email: {{ customer.email }}<br />{% endif %}
+    {% if customer.phone %}Phone: {{ customer.phone }}<br />{% endif %}
+    {% if customer.state %}State: {{ customer.state }}<br />{% endif %}
+    {% if customer.preferred_contact_method %}Preferred contact: {{ customer.get_preferred_contact_method_display }}{% endif %}
+  </p>
+
+  <h2>Submissions</h2>
+  {% if submissions %}
+    <ul>
+      {% for s in submissions %}
+        <li>
+          Submission {{ s.id }} — {{ s.get_status_display }} — {{ s.created_at }}
+          <a href="{% url 'pre_call_summary' s.id %}">Summary</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No submissions.</p>
+  {% endif %}
+{% endblock %}

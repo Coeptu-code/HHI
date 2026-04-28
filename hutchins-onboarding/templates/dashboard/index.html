@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+  <h1>Dashboard</h1>
+
+  <div class="cards">
+    <div class="card">
+      <div class="label">Total submissions</div>
+      <div class="value">{{ total_submissions }}</div>
+    </div>
+    <div class="card">
+      <div class="label">Referral opportunities</div>
+      <div class="value">{{ referral_count }}</div>
+    </div>
+    <div class="card">
+      <div class="label">Avg coverage score</div>
+      <div class="value">{% if avg_coverage_score %}{{ avg_coverage_score|floatformat:0 }}{% else %}—{% endif %}</div>
+    </div>
+  </div>
+
+  <p>
+    <a class="button" href="{% url 'create_questionnaire_link' %}">Create questionnaire link</a>
+  </p>
+
+  <h2>Recent intake links</h2>
+  {% if recent_links %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Created</th>
+          <th>Status</th>
+          <th>Intake URL</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in recent_links %}
+          <tr>
+            <td>{{ item.link.created_at }}</td>
+            <td>
+              {% if item.link.completed_at %}
+                Completed
+              {% elif item.link.is_active %}
+                Active
+              {% else %}
+                Inactive
+              {% endif %}
+            </td>
+            <td>
+              <a href="{{ item.intake_url }}">{{ item.intake_url }}</a>
+            </td>
+            <td>
+              <button
+                type="button"
+                class="button button-secondary copy-btn"
+                data-copy="{{ item.intake_url }}"
+              >
+                Copy
+              </button>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No links yet. Create one to start onboarding.</p>
+  {% endif %}
+
+  <h2>Recent submissions</h2>
+  {% if recent_submissions %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Customer</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in recent_submissions %}
+          <tr>
+            <td>{{ s.id }}</td>
+            <td>
+              {% if s.customer %}
+                <a href="{% url 'customer_detail' s.customer.id %}">{{ s.customer }}</a>
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td>{{ s.get_status_display }}</td>
+            <td>{{ s.created_at }}</td>
+            <td><a href="{% url 'pre_call_summary' s.id %}">Summary</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No submissions yet.</p>
+  {% endif %}
+{% endblock %}

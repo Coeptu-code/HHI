@@ -1,0 +1,124 @@
+.auth-page {
+  background: #f8fafc;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.auth-shell {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px 14px;
+}
+
+.auth-card {
+  width: min(520px, 100%);
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 18px;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
+  padding: 22px 18px;
+}
+
+.auth-logo {
+  display: grid;
+  place-items: center;
+  margin-bottom: 14px;
+}
+
+.auth-logo img {
+  max-width: 260px;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.auth-title {
+  font-weight: 700;
+  font-size: 18px;
+  margin: 6px 0 14px 0;
+  text-align: center;
+  color: #0f172a;
+}
+
+.auth-subtitle {
+  text-align: center;
+  margin-top: -6px;
+  margin-bottom: 14px;
+  color: rgba(15, 23, 42, 0.7);
+  font-size: 13px;
+}
+
+.auth-error {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #991b1b;
+  border-radius: 14px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.auth-form .form-group label {
+  display: block;
+  color: rgba(15, 23, 42, 0.78);
+  margin-bottom: 6px;
+}
+
+.auth-form input[type="text"],
+.auth-form input[type="password"] {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  background: #fff !important;
+  color: #0f172a !important;
+  border: 1px solid rgba(15, 23, 42, 0.18) !important;
+  border-radius: 12px !important;
+  min-height: 46px;
+  padding: 10px 12px;
+  box-shadow: none !important;
+}
+
+.auth-form input[type="text"]::placeholder,
+.auth-form input[type="password"]::placeholder {
+  color: rgba(15, 23, 42, 0.45);
+}
+
+.auth-form input[type="text"]:focus,
+.auth-form input[type="password"]:focus {
+  outline: none;
+  border-color: rgba(29, 140, 248, 0.8) !important;
+  box-shadow: 0 0 0 3px rgba(29, 140, 248, 0.12) !important;
+}
+
+.auth-form .form-group {
+  margin-bottom: 14px;
+}
+
+.auth-actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.auth-actions .btn {
+  min-height: 46px;
+  padding-left: 18px;
+  padding-right: 18px;
+  font-weight: 700;
+}
+
+@media (max-width: 420px) {
+  .auth-card {
+    padding: 18px 14px;
+  }
+
+  .auth-logo img {
+    max-width: 220px;
+  }
+}

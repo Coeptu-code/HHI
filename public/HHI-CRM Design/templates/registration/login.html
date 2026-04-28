@@ -1,0 +1,43 @@
+{% extends "layouts/auth.html" %}
+{% load static %}
+
+{% block title %}Sign In | HHI CRM{% endblock %}
+
+{% block content %}
+  <div class="auth-card">
+    <div class="auth-logo">
+      <img src="{% static 'img/hhi-logo-long.png' %}" alt="HHI Logo" />
+    </div>
+    <div class="auth-title">Sign in</div>
+    <div class="auth-subtitle">HHI CRM</div>
+
+    {% if form.errors %}
+      <div class="auth-error">
+        Your username and password didn’t match. Please try again.
+      </div>
+    {% endif %}
+
+    <form method="post" class="auth-form" novalidate>
+      {% csrf_token %}
+
+      {% if next %}
+        <input type="hidden" name="next" value="{{ next }}">
+      {% endif %}
+
+      <div class="form-group">
+        <label for="{{ form.username.id_for_label }}">Username</label>
+        {{ form.username }}
+      </div>
+
+      <div class="form-group">
+        <label for="{{ form.password.id_for_label }}">Password</label>
+        {{ form.password }}
+      </div>
+
+      <div class="auth-actions">
+        <button type="submit" class="btn btn-primary btn-round">Sign in</button>
+      </div>
+    </form>
+  </div>
+{% endblock %}
+

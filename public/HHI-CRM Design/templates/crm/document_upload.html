@@ -1,0 +1,90 @@
+{% extends "crm/base_crm.html" %}
+
+{% block crm_content %}
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="card-title">Document Upload</h4>
+          <p class="card-category">Upload a handwritten note (review workflow) or a policy document</p>
+        </div>
+        <div class="card-body">
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+
+            <div class="row">
+              <div class="col-md-6 pr-md-1">
+                <div class="form-group">
+                  <label for="{{ form.client.id_for_label }}">Client (optional)</label>
+                  {{ form.client }}
+                  {{ form.client.errors }}
+                </div>
+              </div>
+              <div class="col-md-6 pl-md-1">
+                <div class="form-group">
+                  <label for="{{ form.document_type.id_for_label }}">Document Type</label>
+                  {{ form.document_type }}
+                  {{ form.document_type.errors }}
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 pr-md-1">
+                <div class="form-group">
+                  <label for="{{ form.file.id_for_label }}">Single file</label>
+                  {{ form.file }}
+                  {{ form.file.errors }}
+                  <small class="form-text text-muted">Handwritten note: 1 file. Policy: 1 PDF.</small>
+                </div>
+              </div>
+              <div class="col-md-6 pl-md-1">
+                <div class="form-group">
+                  <label for="{{ form.files.id_for_label }}">Multiple policy images</label>
+                  {{ form.files }}
+                  {{ form.files.errors }}
+                  <small class="form-text text-muted">Policy only. Upload multiple snaps to merge into one PDF.</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-12">
+                <div class="form-group">
+                  <label for="{{ form.notes.id_for_label }}">Notes</label>
+                  {{ form.notes }}
+                  {{ form.notes.errors }}
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-round">Upload</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if result %}
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-header">
+            <h4 class="card-title">Result</h4>
+          </div>
+          <div class="card-body">
+            {% if result.type == "policy" %}
+              <p><strong>Saved policy:</strong> #{{ result.id }}</p>
+              <p><strong>Pages:</strong> {{ result.page_count }}</p>
+              <p><a href="{% url 'crm:policy-detail' result.id %}">Open policy</a></p>
+              {% if result.file_url %}
+                <p><a href="{{ result.file_url }}" target="_blank" rel="noreferrer">Open stored file</a></p>
+              {% endif %}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,22 @@
+{% if clients_turning_65 %}
+  <div class="dashboard-list">
+    {% for entry in clients_turning_65|slice:":10" %}
+      <a class="dashboard-list-item" href="{% url 'crm:client-detail' entry.id %}">
+        <div class="dashboard-list-main">
+          <div class="dashboard-list-title">{{ entry.full_name }}</div>
+          <div class="dashboard-list-sub">
+            DOB: {{ entry.dob }}{% if entry.phone_number %} &middot; {{ entry.phone_number }}{% endif %}
+            &middot; Turns 65: {{ entry.turns_65_on|date:"n/j/Y" }} (in {{ entry.days_until }}d)
+          </div>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+
+  {% if clients_turning_65|length > 10 %}
+    <div class="text-muted dashboard-empty-note">Showing first 10 of {{ clients_turning_65|length }}.</div>
+  {% endif %}
+{% else %}
+  <div class="text-muted dashboard-empty-note">No clients turning 65 in the next 90 days.</div>
+{% endif %}
+

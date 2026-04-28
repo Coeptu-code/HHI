@@ -1,0 +1,20 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}{{ page_title|default:"CRM" }} | HHI CRM{% endblock %}
+
+{% block content %}
+  {% if messages %}
+    <div class="row">
+      <div class="col-12">
+        {% for message in messages %}
+          <div class="alert alert-info alert-with-icon">
+            <span data-notify="icon" class="tim-icons icon-bell-55"></span>
+            <span>{{ message }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  {% block crm_content %}{% endblock %}
+{% endblock %}

@@ -1,0 +1,83 @@
+﻿{% extends "crm/base_scanner.html" %}
+{% load static %}
+
+{% block scanner_content %}
+  <div class="scanner-shell">
+    <div class="scanner-topbar">
+      <a href="{% url 'crm:client-detail' client.id %}" class="scanner-back-btn">&larr; Back</a>
+      <div class="scanner-title-wrap">
+        <div class="scanner-title">Scan Document</div>
+        <div class="scanner-subtitle">{{ client.full_name }}</div>
+      </div>
+      <div class="scanner-page-count" id="pageCountBadge">0 pages</div>
+    </div>
+
+    <div class="scanner-stage">
+      <video id="scannerVideo" autoplay playsinline muted></video>
+      <canvas id="scannerCanvas" class="hidden"></canvas>
+
+      <div class="scanner-guide">
+        <div class="scanner-guide-frame"></div>
+      </div>
+
+      <div class="scanner-fallback hidden" id="scannerFallback">
+        <div class="scanner-fallback-card">
+          <p class="scanner-fallback-title">Camera preview unavailable.</p>
+          <p class="scanner-fallback-subtitle">Use the upload button to capture pages instead.</p>
+          <input type="file" id="scannerFileInput" accept="image/*" capture="environment" multiple>
+        </div>
+      </div>
+    </div>
+
+    <div class="scanner-rail" id="scannerRail" data-collapsed="0">
+      <button
+        type="button"
+        class="scanner-rail-toggle"
+        id="railToggleBtn"
+        aria-expanded="true"
+        aria-label="Collapse pages rail"
+      >
+        <span class="scanner-rail-toggle-icon" id="railToggleIcon" aria-hidden="true">&#x25BC;</span>
+      </button>
+
+      <div class="scanner-rail-expanded" id="thumbnailRail"></div>
+      <div class="scanner-rail-collapsed" id="pillRail"></div>
+    </div>
+
+    <div class="scanner-bottom-sheet">
+      <form id="clientScanMetaForm" onsubmit="return false;">
+        {% csrf_token %}
+        <div class="scanner-doc-meta">
+          <select id="id_document_type" class="scanner-input">
+            {% for value, label in attachment_form.fields.document_type.choices %}
+              <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+          <input id="id_display_name" class="scanner-input" type="text" placeholder="Display name (optional)">
+        </div>
+      </form>
+
+      <div class="scanner-controls">
+        <button type="button" id="useFallbackBtn" class="scanner-btn secondary">Upload</button>
+        <button type="button" id="capturePageBtn" class="scanner-shutter" aria-label="Capture page">
+          <span class="scanner-shutter-inner"></span>
+        </button>
+        <button type="button" id="attachToClientBtn" class="scanner-btn primary">Attach</button>
+      </div>
+
+      <div class="scanner-secondary-controls">
+        <button type="button" id="startCameraBtn" class="scanner-mini-btn">Start Camera</button>
+        <button type="button" id="retakeCurrentBtn" class="scanner-mini-btn">Retake Selected</button>
+        <div id="uploadStatusText" class="scanner-status"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.CLIENT_SCANNER = {
+      uploadUrl: "{% url 'crm:client-attachment-upload' client.id %}",
+      detailUrl: "{% url 'crm:client-detail' client.id %}"
+    };
+  </script>
+  <script src="{% static 'js/client_scan_page.js' %}"></script>
+{% endblock %}

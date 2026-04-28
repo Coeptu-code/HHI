@@ -1,0 +1,33 @@
+{% load static %}
+<div class="sidebar">
+  <div class="sidebar-wrapper">
+    <div class="logo">
+      <a href="{% url 'crm:dashboard' %}" class="simple-text logo-normal">
+        <img class="logo-img" src="{% static 'img/hhi-logo.png' %}" alt="HHI Logo" />
+      </a>
+    </div>
+
+    <ul class="nav">
+      <li class="{% if active_page == 'dashboard' %}active{% endif %}">
+        <a href="{% url 'crm:dashboard' %}">
+          <i class="tim-icons icon-chart-pie-36"></i>
+          <p>Dashboard</p>
+        </a>
+      </li>
+
+      <li class="{% if active_page == 'client_list' %}active{% endif %}">
+        <a href="{% url 'crm:client-list' %}">
+          <i class="tim-icons icon-bullet-list-67"></i>
+          <p>Client List</p>
+        </a>
+      </li>
+
+      <li class="{% if active_page == 'client_intake' %}active{% endif %}">
+        <a href="{% url 'crm:client-intake' %}">
+          <i class="tim-icons icon-simple-add"></i>
+          <p>New Client Intake</p>
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>

@@ -1,0 +1,17 @@
+<div class="dashboard-chart-wrap" role="img" aria-label="Clients added per day for the last 7 days">
+  <div class="dashboard-bar-chart">
+    {% for point in clients_added_7_days.series %}
+      <div class="dashboard-bar-col">
+        <div class="dashboard-bar-value">{{ point.count }}</div>
+        <div class="dashboard-bar" style="--pct: {{ point.pct_of_max }};"></div>
+        <div class="dashboard-bar-label">{{ point.day|date:"D" }}</div>
+        <div class="dashboard-bar-sublabel">{{ point.day|date:"n/j" }}</div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="dashboard-chart-foot text-muted">
+    Total: <strong>{{ clients_added_7_days.total }}</strong> client{{ clients_added_7_days.total|pluralize }} added
+  </div>
+</div>
+

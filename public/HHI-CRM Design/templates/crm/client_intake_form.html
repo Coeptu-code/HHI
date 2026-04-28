@@ -1,0 +1,173 @@
+{% extends "crm/base_crm.html" %}
+{% load static %}
+
+{% block crm_content %}
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="card-title">{% if client %}Edit Client{% else %}Client Intake Form{% endif %}</h4>
+          <p class="card-category">Create a client and attach policy or handwritten note files</p>
+        </div>
+        <div class="card-body">
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+
+            <div class="row">
+              <div class="col-md-6 pr-md-1">
+                <div class="form-group">
+                  <label for="{{ form.full_name.id_for_label }}">Full Name</label>
+                  {{ form.full_name }}
+                  {{ form.full_name.errors }}
+                </div>
+              </div>
+              <div class="col-md-3 px-md-1">
+                <div class="form-group">
+                  <label for="{{ form.dob.id_for_label }}">DOB</label>
+                  {{ form.dob }}
+                  {{ form.dob.errors }}
+                </div>
+              </div>
+              <div class="col-md-3 pl-md-1">
+                <div class="form-group">
+                  <label for="{{ form.phone_number.id_for_label }}">Phone Number</label>
+                  {{ form.phone_number }}
+                  {{ form.phone_number.errors }}
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 pr-md-1">
+                <div class="form-group">
+                  <label for="{{ form.email.id_for_label }}">Email</label>
+                  {{ form.email }}
+                  {{ form.email.errors }}
+                </div>
+              </div>
+              <div class="col-md-6 pl-md-1">
+                <div class="form-group">
+                  <label for="{{ form.income.id_for_label }}">Income</label>
+                  {{ form.income }}
+                  {{ form.income.errors }}
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-8 pr-md-1">
+                <div class="form-group">
+                  <label for="{{ form.address.id_for_label }}">Address</label>
+                  {{ form.address }}
+                  {{ form.address.errors }}
+                </div>
+              </div>
+              <div class="col-md-4 pl-md-1">
+                <div class="form-group">
+                  <label for="{{ form.zip_code.id_for_label }}">ZIP</label>
+                  {{ form.zip_code }}
+                  {{ form.zip_code.errors }}
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 pr-md-1">
+                <div class="form-group">
+                  <label for="{{ form.city.id_for_label }}">City</label>
+                  {{ form.city }}
+                  {{ form.city.errors }}
+                </div>
+              </div>
+              <div class="col-md-6 pl-md-1">
+                <div class="form-group">
+                  <label for="{{ form.state.id_for_label }}">State</label>
+                  {{ form.state }}
+                  {{ form.state.errors }}
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-12">
+                <div class="form-group">
+                  <label for="{{ form.notes.id_for_label }}">Client Notes</label>
+                  {{ form.notes }}
+                  {{ form.notes.errors }}
+                </div>
+              </div>
+            </div>
+
+            <hr>
+
+            <div class="row">
+              <div class="col-md-12">
+                <h5 class="title">Policy Upload</h5>
+              </div>
+              <div class="col-md-6 pr-md-1">
+                <div class="form-group">
+                  <label for="{{ form.policy_pdf.id_for_label }}">Desktop PDF Upload</label>
+                  {{ form.policy_pdf }}
+                  {{ form.policy_pdf.errors }}
+                  <small class="form-text text-muted">Use this for one existing PDF policy document.</small>
+                </div>
+              </div>
+              <div class="col-md-6 pl-md-1">
+                <div class="form-group">
+                  <label for="{{ form.policy_images.id_for_label }}">Mobile Policy Images</label>
+                  {{ form.policy_images }}
+                  {{ form.policy_images.errors }}
+                  <small class="form-text text-muted">Use this for multiple phone snaps that will merge into one PDF.</small>
+                </div>
+              </div>
+              <div class="col-md-12">
+                <div class="form-group">
+                  <label for="{{ form.policy_notes.id_for_label }}">Policy Notes</label>
+                  {{ form.policy_notes }}
+                  {{ form.policy_notes.errors }}
+                </div>
+              </div>
+            </div>
+
+            <hr>
+
+            <div class="row">
+              <div class="col-md-12">
+                <h5 class="title">Optional Handwritten Note Upload</h5>
+              </div>
+              <div class="col-md-6 pr-md-1">
+                <div class="form-group">
+                  <label for="{{ form.handwritten_note_file.id_for_label }}">Handwritten Note File</label>
+                  {{ form.handwritten_note_file }}
+                  {{ form.handwritten_note_file.errors }}
+                </div>
+              </div>
+              <div class="col-md-6 pl-md-1">
+                <div class="form-group">
+                  <label for="{{ form.handwritten_note_notes.id_for_label }}">Handwritten Note Notes</label>
+                  {{ form.handwritten_note_notes }}
+                  {{ form.handwritten_note_notes.errors }}
+                </div>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+              <button type="submit" class="btn btn-primary btn-round">Save</button>
+              {% if client %}
+                <a class="btn" href="{% url 'crm:client-detail' client.id %}">Cancel</a>
+              {% endif %}
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.CLIENT_INTAKE = {
+      zipLookupUrl: "{% url 'crm:zip-lookup' %}"
+    };
+  </script>
+  <script src="{% static 'js/client_intake.js' %}"></script>
+{% endblock %}

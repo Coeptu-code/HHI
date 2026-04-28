@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Create Questionnaire Link{% endblock %}
+
+{% block content %}
+  <h1>Create Questionnaire Link</h1>
+
+  <form method="post">
+    {% csrf_token %}
+    <fieldset>
+      <legend>Modules to include (internal only)</legend>
+      {{ form.as_p }}
+      <p><small>Clients will see one blended intake form (no module sections).</small></p>
+    </fieldset>
+
+    <button type="submit">Create link</button>
+  </form>
+{% endblock %}
