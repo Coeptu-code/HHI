@@ -1,0 +1,118 @@
+{% extends "intake/wizard_base.html" %}
+
+{% block step_body %}
+  <p>Household includes people who file taxes with you.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Members</th>
+          <th>DOB</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for member in household_members %}
+          <tr>
+            <td>
+              {{ member.first_name }} {{ member.last_name }}
+              {% if member.role == "primary" %}
+                (You)
+              {% elif member.role == "spouse" %}
+                (Spouse)
+              {% else %}
+                (Dependent)
+              {% endif %}
+            </td>
+            <td>{{ member.date_of_birth }}</td>
+            <td>
+              {% if member.role != "primary" %}
+                <a class="button ghost" href="{% url 'intake_household_edit' link.token member.temp_id %}">Edit</a>
+                <form method="post" action="{% url 'intake_household_delete' link.token member.temp_id %}" style="display: inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="secondary">Delete</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="actions-right" style="margin-top: 16px;">
+    <a class="button ghost" href="{% url 'intake_household_add_spouse' link.token %}">Add Spouse</a>
+    <a class="button ghost" href="{% url 'intake_household_add_dependent' link.token %}">Add Dependent</a>
+  </div>
+
+  <ul class="helper-list">
+    {% for line in helper_texts %}
+      <li>{{ line }}</li>
+    {% endfor %}
+  </ul>
+
+  {% if member_form %}
+    <div class="inline-card">
+      <h2>
+        {% if editing_member %}
+          Edit {{ member_role|title }}
+        {% else %}
+          Add {{ member_role|title }}
+        {% endif %}
+      </h2>
+      <form method="post" action="{{ member_action_url }}">
+        {% csrf_token %}
+        {% for field in member_form %}
+          {% if field.field.widget.input_type == "checkbox" %}
+            <div class="field check-row">
+              <label for="{{ field.id_for_label }}">
+                {{ field }}
+                <span>{{ field.label }}</span>
+              </label>
+              {% if field.help_text %}
+                <div class="helper">{{ field.help_text }}</div>
+              {% endif %}
+              {% if field.errors %}
+                <div class="errors">{{ field.errors|striptags }}</div>
+              {% endif %}
+            </div>
+          {% else %}
+            <div class="field">
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}
+                <div class="helper">{{ field.help_text }}</div>
+              {% endif %}
+              {% if field.errors %}
+                <div class="errors">{{ field.errors|striptags }}</div>
+              {% endif %}
+            </div>
+          {% endif %}
+        {% endfor %}
+        <div class="actions">
+          <a class="button secondary" href="{% url 'intake_step' link.token 'household' %}">Cancel</a>
+          <div class="actions-right">
+            <button type="submit">
+              {% if member_role == "spouse" %}Save Spouse{% else %}Save Dependent{% endif %}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="actions">
+      {% if previous_step %}
+        <button type="submit" name="nav" value="previous" class="secondary">Previous</button>
+      {% else %}
+        <div></div>
+      {% endif %}
+      <div class="actions-right">
+        <button type="submit" name="nav" value="next">Next</button>
+      </div>
+    </div>
+  </form>
+{% endblock %}

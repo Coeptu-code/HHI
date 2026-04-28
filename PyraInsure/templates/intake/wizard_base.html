@@ -1,0 +1,24 @@
+{% extends "intake/public_base.html" %}
+
+{% block title %}{{ step_label }} - Hutchins Intake{% endblock %}
+
+{% block header_right %}
+  <div class="trust-chip" title="Private intake">Private session</div>
+{% endblock %}
+
+{% block card_top %}
+  {% if step_total %}
+    <div class="intake-card-top">
+      <div class="step-chip">Step {{ step_index }} of {{ step_total }}</div>
+      <div class="card-note">You can't break anything - just answer honestly.</div>
+    </div>
+    <div class="progress" aria-label="Progress">
+      <span style="width: {% widthratio step_index step_total 100 %}%"></span>
+    </div>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  <h1>{{ step_label }}</h1>
+  {% block step_body %}{% endblock %}
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "intake/public_base.html" %}
+
+{% block title %}Welcome - Hutchins Intake{% endblock %}
+
+{% block header_right %}
+  <div class="trust-chip" title="No spam">No spam</div>
+{% endblock %}
+
+{% block content %}
+  <h1>Let's get you set up.</h1>
+  <p>Thanks for taking a moment to share a few details before your consultation.</p>
+  <p>
+    This intake helps Hutchins Health Insurance prepare for your call. We primarily provide health insurance guidance.
+    We may also ask a few questions about other coverage needs to identify possible gaps and (only with your consent)
+    connect you with licensed partner agents for those insurance lines.
+  </p>
+  <ul class="helper-list">
+    <li>Answer what you know - "Not sure" is totally fine.</li>
+    <li>You can review anything with your agent on the call.</li>
+  </ul>
+  <div class="actions" style="justify-content: flex-end;">
+    <a class="button" href="{{ start_url }}">Start intake</a>
+  </div>
+{% endblock %}

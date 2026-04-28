@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Link Created{% endblock %}
+
+{% block content %}
+  <h1>Link Created</h1>
+
+  <p><strong>Selected modules (internal):</strong> {{ link.selected_modules|join:", " }}</p>
+
+  <p><strong>Public intake URL:</strong></p>
+  <p><a href="{{ intake_url }}">{{ intake_url }}</a></p>
+
+  <p><small>Copy-friendly:</small></p>
+  <pre>{{ intake_url }}</pre>
+
+  <p><a class="button" href="{% url 'dashboard' %}">Back to dashboard</a></p>
+{% endblock %}
+
