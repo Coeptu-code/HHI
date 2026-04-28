@@ -1,56 +1,174 @@
 {% extends "intake/public_base.html" %}
 
-{% block title %}CoveraGap&trade; Score - Hutchins{% endblock %}
+{% block title %}CoveraGap™ Score{% endblock %}
 
 {% block content %}
   {% if score_unavailable %}
-    <h1>CoveraGap&trade; Score</h1>
-    <p>Score not found or unavailable.</p>
+    <div class="col gap-4">
+      <h1 class="serif">CoveraGap™ Score</h1>
+      <p class="muted" style="font-size: 13px;">Score not found or unavailable.</p>
+    </div>
   {% else %}
-    <h1>CoveraGap&trade; Score</h1>
-    {% if customer %}
-      <p class="subtle">{{ customer.first_name }} {{ customer.last_name }}</p>
+    <!-- Aurora backdrop -->
+    <div class="score-aurora" style="position: relative; margin-bottom: 48px; border-radius: 16px; overflow: hidden;">
+      <!-- Animated blobs -->
+      <div style="position: absolute; inset: 0; z-index: 0;">
+        <div style="position: absolute; width: 300px; height: 300px; background: radial-gradient(circle, var(--teal) 0%, transparent 70%); border-radius: 50%; opacity: 0.15; top: -100px; left: -100px; animation: blob-float 8s infinite;">  </div>
+        <div style="position: absolute; width: 250px; height: 250px; background: radial-gradient(circle, var(--orange) 0%, transparent 70%); border-radius: 50%; opacity: 0.12; bottom: -80px; right: -80px; animation: blob-float 10s infinite 2s;"></div>
+        <div style="position: absolute; width: 280px; height: 280px; background: radial-gradient(circle, var(--good) 0%, transparent 70%); border-radius: 50%; opacity: 0.1; top: 50%; left: 30%; animation: blob-float 12s infinite 4s;"></div>
+        <div style="position: absolute; width: 200px; height: 200px; background: radial-gradient(circle, var(--ink-2) 0%, transparent 70%); border-radius: 50%; opacity: 0.08; top: 20%; right: 10%; animation: blob-float 9s infinite 1s;"></div>
+      </div>
+
+      <!-- Ring card -->
+      <div class="card card-pad" style="position: relative; z-index: 1; background: white; text-align: center;">
+        <p class="muted" style="margin: 0 0 16px 0; font-size: 12px;">Overall Coverage Score</p>
+
+        <div style="position: relative; width: 220px; height: 220px; margin: 0 auto 24px;">
+          <!-- SVG Ring -->
+          <svg style="position: absolute; inset: 0; width: 100%; height: 100%;" viewBox="0 0 220 220">
+            <!-- Background circle -->
+            <circle cx="110" cy="110" r="100" fill="none" stroke="var(--surface-2)" stroke-width="12" />
+            <!-- Animated progress ring -->
+            <circle cx="110" cy="110" r="100" fill="none" stroke="url(#ring-gradient)" stroke-width="12" stroke-dasharray="628" stroke-dashoffset="628" data-ring-animate="true" data-ring-value="{{ scorecard.overall_score }}" data-ring-max="100" style="stroke-linecap: round; transition: stroke-dashoffset 2s cubic-bezier(0.25, 0.46, 0.45, 0.94); transform: rotate(-90deg); transform-origin: 50% 50%;" />
+            <defs>
+              <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:var(--teal);stop-opacity:1" />
+                <stop offset="100%" style="stop-color:var(--good);stop-opacity:1" />
+              </linearGradient>
+            </defs>
+          </svg>
+
+          <!-- Counter in center -->
+          <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <span class="serif" style="font-size: 56px; font-weight: 700; color: var(--ink); margin: 0;" data-counter-target>0</span>
+            <span class="muted" style="font-size: 12px; margin: 0;">/100</span>
+          </div>
+        </div>
+
+        <!-- Stat row -->
+        <div class="row between" style="padding: 0 24px; margin-bottom: 24px;">
+          <div style="text-align: center;">
+            <div class="muted" style="font-size: 11px; margin-bottom: 4px;">Gap Risk</div>
+            <div class="serif" style="font-size: 18px; font-weight: 700; color: var(--ink);">{{ scorecard.gap_risk_score|default:"—" }}</div>
+          </div>
+          <div style="width: 1px; background: var(--surface-2);"></div>
+          <div style="text-align: center;">
+            <div class="muted" style="font-size: 11px; margin-bottom: 4px;">Modules</div>
+            <div class="serif" style="font-size: 18px; font-weight: 700; color: var(--ink);">{% if scorecard.modules %}{{ scorecard.modules|length }}{% else %}—{% endif %}</div>
+          </div>
+        </div>
+
+        <!-- Customer name (if available) -->
+        {% if customer %}
+          <p class="muted" style="margin: 0; font-size: 12px;">{{ customer.first_name }} {{ customer.last_name }}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Module breakdown -->
+    {% if scorecard.modules %}
+      <div class="col gap-3" style="margin-bottom: 48px;">
+        <h2 class="serif" style="margin: 0; font-size: 18px;">Module breakdown</h2>
+
+        {% for module in scorecard.modules %}
+          <div class="card card-pad-sm">
+            <div style="margin-bottom: 12px;">
+              <div class="row between">
+                <h3 class="serif" style="margin: 0; font-size: 13px; font-weight: 600;">{{ module.label }}</h3>
+                <span class="serif" style="font-size: 13px; font-weight: 600; color: var(--ink);">{{ module.score }}/100</span>
+              </div>
+              <small class="muted" style="display: block; margin-top: 4px;">Gap Risk: {{ module.gap_points }}</small>
+            </div>
+
+            <!-- Severity bar -->
+            <div style="height: 8px; background: var(--surface-2); border-radius: 4px; margin-bottom: 12px; overflow: hidden;">
+              <div class="sev-bar" style="height: 100%; background: linear-gradient(90deg, var(--teal), var(--good)); transition: width 1s ease-out;" data-width="{% widthratio module.score 100 100 %}"></div>
+            </div>
+
+            <!-- Items to review -->
+            {% if module.items_to_review %}
+              <h4 style="margin: 0 0 8px 0; font-size: 12px; font-weight: 600; color: var(--ink-2);">Items to review</h4>
+              <ul style="margin: 0; padding-left: 20px; font-size: 12px; color: var(--ink-2);">
+                {% for item in module.items_to_review %}
+                  <li style="margin: 4px 0;">{{ item }}</li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p style="margin: 0; font-size: 12px; color: var(--ink-2);">No major review items identified for this area.</p>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
     {% endif %}
 
-    <div class="score-grid">
-      <div class="score-box">
-        <div class="subtle">Overall Coverage Score</div>
-        <div class="score-value">{{ scorecard.overall_score }}/100</div>
+    <!-- Disclaimer cards -->
+    <div class="col gap-3">
+      <div class="card card-pad-sm" style="background: var(--surface); border-left: 4px solid var(--teal); border-radius: 0 4px 4px 0;">
+        <p style="margin: 0; font-size: 12px; color: var(--ink-2); line-height: 1.5;">
+          The CoveraGap™ Score is an educational estimate based only on the answers provided. It is not a coverage determination, insurance recommendation, quote, or guarantee of eligibility.
+        </p>
       </div>
-      <div class="score-box">
-        <div class="subtle">Gap Risk Score</div>
-        <div class="score-value">{{ scorecard.gap_risk_score }}</div>
+      <div class="card card-pad-sm" style="background: var(--surface); border-left: 4px solid var(--orange); border-radius: 0 4px 4px 0;">
+        <p style="margin: 0; font-size: 12px; color: var(--ink-2); line-height: 1.5;">
+          Review these items with a licensed insurance professional before making coverage decisions.
+        </p>
       </div>
     </div>
 
-    <div class="inline-card">
-      <h2>Module breakdown</h2>
-      {% for module in scorecard.modules %}
-        <section class="module">
-          <h3>{{ module.label }}: {{ module.score }}/100</h3>
-          <p class="subtle">Gap Risk Score: {{ module.gap_points }}</p>
-          <h4>Items to review with your agent</h4>
-          {% if module.items_to_review %}
-            <ul>
-              {% for item in module.items_to_review %}
-                <li>{{ item }}</li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <p>No major review items were identified from the answers provided for this area.</p>
-          {% endif %}
-        </section>
-      {% empty %}
-        <p>No score details are available.</p>
-      {% endfor %}
-    </div>
+    <!-- Animation styles -->
+    <style>
+      @keyframes blob-float {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(30px, -30px) scale(1.05); }
+        66% { transform: translate(-20px, 20px) scale(0.95); }
+      }
+      .sev-bar { width: 0; }
+    </style>
 
-    <div class="inline-card">
-      <p>
-        The CoveraGap&trade; Score is an educational estimate based only on the answers provided. It is not a coverage
-        determination, insurance recommendation, quote, or guarantee of eligibility.
-      </p>
-      <p class="subtle">Review these items with a licensed insurance professional before making coverage decisions.</p>
-    </div>
+    <!-- Counter and ring animation script -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Animate counter
+        const target = document.querySelector('[data-counter-target]');
+        const ring = document.querySelector('[data-ring-animate]');
+        if (target && ring) {
+          const score = parseInt(ring.dataset.ringValue, 10);
+          const max = parseInt(ring.dataset.ringMax, 10) || 100;
+          let current = 0;
+          const duration = 2000;
+          const step = score / (duration / 16);
+          const interval = setInterval(() => {
+            current += step;
+            if (current >= score) {
+              current = score;
+              clearInterval(interval);
+            }
+            target.textContent = Math.round(current);
+          }, 16);
+
+          // Animate ring
+          const circumference = 2 * Math.PI * 100;
+          const offset = circumference - (score / max) * circumference;
+          setTimeout(() => {
+            ring.style.strokeDashoffset = offset;
+          }, 100);
+        }
+
+        // Animate severity bars on scroll
+        const observer = new IntersectionObserver(entries => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const bar = entry.target;
+              const width = bar.dataset.width;
+              setTimeout(() => {
+                bar.style.width = width + '%';
+              }, 100);
+              observer.unobserve(bar);
+            }
+          });
+        });
+        document.querySelectorAll('.sev-bar').forEach(bar => observer.observe(bar));
+      });
+    </script>
   {% endif %}
 {% endblock %}

@@ -1,37 +1,34 @@
 {% extends "intake/wizard_base.html" %}
 
 {% block step_body %}
-  <p>Does anyone in your household take prescription medications?</p>
+  <p style="margin-bottom: 24px; color: var(--ink-2);">Does anyone in your household take prescription medications?</p>
 
   <form method="post">
     {% csrf_token %}
-    <div class="table-wrap">
-      <table>
-        <thead>
+    <table class="tbl" style="margin-bottom: 24px;">
+      <thead>
+        <tr>
+          <th>Member</th>
+          <th>Takes Prescriptions?</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in member_rows %}
           <tr>
-            <th>Member</th>
-            <th>Takes Prescriptions?</th>
+            <td style="font-size: 13px;">{{ row.label }}</td>
+            <td style="font-size: 13px;">{{ row.field }}</td>
           </tr>
-        </thead>
-        <tbody>
-          {% for row in member_rows %}
-            <tr>
-              <td>{{ row.label }}</td>
-              <td><div class="choice-group">{{ row.field }}</div></td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    <div class="actions">
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="row between" style="padding-top: 24px;">
       {% if previous_step %}
-        <button type="submit" name="nav" value="previous" class="secondary">Previous</button>
+        <button type="submit" name="nav" value="previous" class="btn ghost">← Previous</button>
       {% else %}
         <div></div>
       {% endif %}
-      <div class="actions-right">
-        <button type="submit" name="nav" value="next">Next</button>
-      </div>
+      <button type="submit" name="nav" value="next" class="btn brand">Next</button>
     </div>
   </form>
 {% endblock %}

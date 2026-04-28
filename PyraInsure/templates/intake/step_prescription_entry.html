@@ -1,44 +1,44 @@
 {% extends "intake/wizard_base.html" %}
 
 {% block step_body %}
-  <p>Add prescription medications for {{ member.first_name }} {{ member.last_name }}.</p>
+  <p style="margin-bottom: 24px; color: var(--ink-2);">Add prescription medications for {{ member.first_name }} {{ member.last_name }}.</p>
 
-  <div class="inline-card drug-search-root" data-search-url="{% url 'drug_search' %}">
+  <div class="card card-pad-sm drug-search-root" data-search-url="{% url 'drug_search' %}" style="background: var(--surface); margin-bottom: 24px;">
     <form method="post">
       {% csrf_token %}
       <input type="hidden" name="action" value="add_medication" />
       {% if form.non_field_errors %}
-        <div class="errors">{{ form.non_field_errors }}</div>
+        <div class="card tint-orange card-pad-sm" style="margin-bottom: 16px;">
+          <small style="color: var(--bad);">{{ form.non_field_errors }}</small>
+        </div>
       {% endif %}
       {% for field in form %}
         {% if field.name != "selected_drug_id" and field.name != "selected_drug_name" and field.name != "normalized_drug_name" and field.name != "source" %}
-          <div class="field">
-            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          <label class="field">
+            {{ field.label }}
             {{ field }}
             {% if field.help_text %}
-              <div class="helper">{{ field.help_text }}</div>
+              <small class="muted" style="display: block; margin-top: 4px;">{{ field.help_text }}</small>
             {% endif %}
             {% if field.errors %}
-              <div class="errors">{{ field.errors|striptags }}</div>
+              <small style="color: var(--bad); display: block; margin-top: 4px;">{{ field.errors.0 }}</small>
             {% endif %}
-          </div>
+          </label>
         {% else %}
           {{ field }}
         {% endif %}
       {% endfor %}
       <div class="search-results" data-search-results hidden></div>
-      <div class="actions">
+      <div class="row between" style="padding-top: 16px; border-top: 1px solid var(--surface-2); margin-top: 16px;">
         <div></div>
-        <div class="actions-right">
-          <button type="submit">Add Medication</button>
-        </div>
+        <button type="submit" class="btn brand">Add Medication</button>
       </div>
     </form>
   </div>
 
-  <h2>Selected medications</h2>
   {% if medications %}
-    <table>
+    <h3 class="serif" style="margin: 0 0 16px 0; font-size: 14px;">Selected medications</h3>
+    <table class="tbl" style="margin-bottom: 24px;">
       <thead>
         <tr>
           <th>Medication</th>
@@ -51,16 +51,16 @@
       <tbody>
         {% for medication in medications %}
           <tr>
-            <td>{{ medication.drug_name }}</td>
-            <td>{{ medication.normalized_drug_name|default:"-" }}</td>
-            <td>{{ medication.dosage_strength|default:"-" }}</td>
-            <td>{{ medication.frequency|default:"-" }}</td>
-            <td>
-              <form method="post">
+            <td style="font-size: 13px;">{{ medication.drug_name }}</td>
+            <td style="font-size: 13px;">{{ medication.normalized_drug_name|default:"-" }}</td>
+            <td style="font-size: 13px;">{{ medication.dosage_strength|default:"-" }}</td>
+            <td style="font-size: 13px;">{{ medication.frequency|default:"-" }}</td>
+            <td style="text-align: right;">
+              <form method="post" style="display: inline;">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="remove_medication" />
                 <input type="hidden" name="remove_index" value="{{ forloop.counter0 }}" />
-                <button type="submit" class="secondary">Remove</button>
+                <button type="submit" class="btn sm ghost" style="color: var(--bad);">Remove</button>
               </form>
             </td>
           </tr>
@@ -68,20 +68,18 @@
       </tbody>
     </table>
   {% else %}
-    <p class="subtle">No medications listed. You can continue if none need to be entered.</p>
+    <p class="muted" style="margin-bottom: 24px; font-size: 13px;">No medications listed. You can continue if none need to be entered.</p>
   {% endif %}
 
   <form method="post">
     {% csrf_token %}
-    <div class="actions">
+    <div class="row between" style="padding-top: 24px;">
       {% if previous_step %}
-        <button type="submit" name="action" value="previous" class="secondary">Previous</button>
+        <button type="submit" name="action" value="previous" class="btn ghost">← Previous</button>
       {% else %}
         <div></div>
       {% endif %}
-      <div class="actions-right">
-        <button type="submit" name="action" value="next">Next</button>
-      </div>
+      <button type="submit" name="action" value="next" class="btn brand">Next</button>
     </div>
   </form>
 {% endblock %}
