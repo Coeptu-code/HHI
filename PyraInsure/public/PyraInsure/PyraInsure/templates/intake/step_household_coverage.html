@@ -1,0 +1,43 @@
+{% extends "intake/wizard_base.html" %}
+
+{% block step_body %}
+  <p>Who needs health coverage?</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Member</th>
+            <th>Needs Coverage?</th>
+            <th>Other Coverage Access?</th>
+            <th>Tobacco User?</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in member_rows %}
+            <tr>
+              <td>{{ row.label }}</td>
+              <td><div class="choice-group">{{ row.needs_coverage_field }}</div></td>
+              <td><div class="choice-group">{{ row.other_coverage_access_field }}</div></td>
+              <td><div class="choice-group">{{ row.tobacco_user_field }}</div></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="helper">Other coverage access means eligible for coverage through a job, Medicare, Medicaid, or CHIP.</p>
+    <p class="helper">Tobacco user means used tobacco products 4 or more times per week on average during the past 6 months, not including ceremonial uses.</p>
+    <div class="actions">
+      {% if previous_step %}
+        <button type="submit" name="nav" value="previous" class="secondary">Previous</button>
+      {% else %}
+        <div></div>
+      {% endif %}
+      <div class="actions-right">
+        <button type="submit" name="nav" value="next">Next</button>
+      </div>
+    </div>
+  </form>
+{% endblock %}

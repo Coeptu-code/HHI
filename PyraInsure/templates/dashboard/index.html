@@ -1,104 +1,105 @@
 {% extends "base.html" %}
 
 {% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block page_actions %}
+  <a class="btn brand" href="{% url 'create_questionnaire_link' %}">+ New intake link</a>
+{% endblock %}
 
 {% block content %}
-  <h1>Dashboard</h1>
-
-  <div class="cards">
-    <div class="card">
-      <div class="label">Total submissions</div>
-      <div class="value">{{ total_submissions }}</div>
+  <!-- Stat cards row -->
+  <div class="row gap-4" style="margin-bottom: 24px;">
+    <div class="card card-pad" style="flex: 1; text-align: center;">
+      <div style="font-size: 12px; color: var(--ink-4); margin-bottom: 8px;">Total submissions</div>
+      <div class="serif" style="font-size: 28px; font-weight: 700; color: var(--ink);">{{ total_submissions }}</div>
     </div>
-    <div class="card">
-      <div class="label">Referral opportunities</div>
-      <div class="value">{{ referral_count }}</div>
+    <div class="card card-pad" style="flex: 1; text-align: center;">
+      <div style="font-size: 12px; color: var(--ink-4); margin-bottom: 8px;">Referral opportunities</div>
+      <div class="serif" style="font-size: 28px; font-weight: 700; color: var(--ink);">{{ referral_count }}</div>
     </div>
-    <div class="card">
-      <div class="label">Avg coverage score</div>
-      <div class="value">{% if avg_coverage_score %}{{ avg_coverage_score|floatformat:0 }}{% else %}—{% endif %}</div>
+    <div class="card card-pad" style="flex: 1; text-align: center;">
+      <div style="font-size: 12px; color: var(--ink-4); margin-bottom: 8px;">Avg coverage score</div>
+      <div class="serif" style="font-size: 28px; font-weight: 700; color: var(--ink);">{% if avg_coverage_score %}{{ avg_coverage_score|floatformat:0 }}{% else %}—{% endif %}</div>
+    </div>
+    <div class="card card-pad" style="flex: 1; text-align: center;">
+      <div style="font-size: 12px; color: var(--ink-4); margin-bottom: 8px;">Open intake links</div>
+      <div class="serif" style="font-size: 28px; font-weight: 700; color: var(--ink);">—</div>
     </div>
   </div>
 
-  <p>
-    <a class="button" href="{% url 'create_questionnaire_link' %}">Create questionnaire link</a>
-  </p>
+  <!-- Content grid -->
+  <div class="row gap-4" style="align-items: start;">
+    <!-- Recent intake links -->
+    <div class="card card-pad" style="flex: 2;">
+      <h3 class="serif" style="margin: 0 0 16px 0; font-size: 16px;">Recent intake links</h3>
+      {% if recent_links %}
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Created</th>
+              <th>Status</th>
+              <th>URL</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in recent_links %}
+              <tr>
+                <td style="font-size: 13px;">{{ item.link.created_at|date:"M j, Y" }}</td>
+                <td>
+                  {% if item.link.completed_at %}
+                    <span class="chip good dot">Completed</span>
+                  {% elif item.link.is_active %}
+                    <span class="chip orange dot">Active</span>
+                  {% else %}
+                    <span class="chip outline dot">Inactive</span>
+                  {% endif %}
+                </td>
+                <td style="font-size: 12px; font-family: monospace; max-width: 240px; overflow: hidden; text-overflow: ellipsis;">{{ item.intake_url }}</td>
+                <td style="text-align: right;">
+                  <button class="btn sm ghost copy-btn" data-copy="{{ item.intake_url }}" style="flex-shrink: 0;">Copy</button>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="muted" style="margin: 0; font-size: 13px;">No links yet. Create one to start onboarding.</p>
+      {% endif %}
+    </div>
 
-  <h2>Recent intake links</h2>
-  {% if recent_links %}
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Created</th>
-          <th>Status</th>
-          <th>Intake URL</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in recent_links %}
-          <tr>
-            <td>{{ item.link.created_at }}</td>
-            <td>
-              {% if item.link.completed_at %}
-                Completed
-              {% elif item.link.is_active %}
-                Active
-              {% else %}
-                Inactive
-              {% endif %}
-            </td>
-            <td>
-              <a href="{{ item.intake_url }}">{{ item.intake_url }}</a>
-            </td>
-            <td>
-              <button
-                type="button"
-                class="button button-secondary copy-btn"
-                data-copy="{{ item.intake_url }}"
-              >
-                Copy
-              </button>
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <p>No links yet. Create one to start onboarding.</p>
-  {% endif %}
-
-  <h2>Recent submissions</h2>
-  {% if recent_submissions %}
-    <table class="table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Customer</th>
-          <th>Status</th>
-          <th>Created</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for s in recent_submissions %}
-          <tr>
-            <td>{{ s.id }}</td>
-            <td>
-              {% if s.customer %}
-                <a href="{% url 'customer_detail' s.customer.id %}">{{ s.customer }}</a>
-              {% else %}
-                —
-              {% endif %}
-            </td>
-            <td>{{ s.get_status_display }}</td>
-            <td>{{ s.created_at }}</td>
-            <td><a href="{% url 'pre_call_summary' s.id %}">Summary</a></td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <p>No submissions yet.</p>
-  {% endif %}
+    <!-- Recent submissions -->
+    <div class="card card-pad" style="flex: 1.1;">
+      <h3 class="serif" style="margin: 0 0 16px 0; font-size: 16px;">Recent submissions</h3>
+      {% if recent_submissions %}
+        <div class="col gap-3">
+          {% for s in recent_submissions %}
+            <div class="row gap-3" style="align-items: center; padding: 12px; background: var(--surface); border-radius: 8px;">
+              <span class="avatar sm bg-mg" style="flex-shrink: 0;">
+                {% if s.customer %}
+                  {{ s.customer.first_name|first }}{{ s.customer.last_name|first }}
+                {% else %}
+                  ?
+                {% endif %}
+              </span>
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-size: 13px; font-weight: 500;">
+                  {% if s.customer %}
+                    <a href="{% url 'customer_detail' s.customer.id %}" style="color: var(--ink); text-decoration: none;">{{ s.customer }}</a>
+                  {% else %}
+                    <span class="muted">Unknown customer</span>
+                  {% endif %}
+                </div>
+                <small class="muted">{{ s.created_at|date:"M j, Y" }}</small>
+              </div>
+              <a href="{% url 'pre_call_summary' s.id %}" class="btn sm outline" style="flex-shrink: 0;">Summary</a>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="muted" style="margin: 0; font-size: 13px;">No submissions yet.</p>
+      {% endif %}
+    </div>
+  </div>
 {% endblock %}

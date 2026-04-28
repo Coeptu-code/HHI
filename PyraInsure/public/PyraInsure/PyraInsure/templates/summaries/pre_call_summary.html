@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Pre-call Summary{% endblock %}
+
+{% block content %}
+  <h1>Pre-call Summary</h1>
+
+  <h2>Client</h2>
+  {% if customer %}
+    <p>
+      <strong>{{ customer.first_name }} {{ customer.last_name }}</strong><br />
+      {% if customer.email %}Email: {{ customer.email }}<br />{% endif %}
+      {% if customer.phone %}Phone: {{ customer.phone }}<br />{% endif %}
+      {% if customer.state %}State: {{ customer.state }}<br />{% endif %}
+      {% if customer.preferred_contact_method %}Preferred contact: {{ customer.get_preferred_contact_method_display }}{% endif %}
+    </p>
+    <p><a href="{% url 'customer_detail' customer.id %}">View customer record</a></p>
+  {% else %}
+    <p>No customer record linked.</p>
+  {% endif %}
+
+  <h2>Household</h2>
+  {% if household_members %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Member</th>
+          <th>Role</th>
+          <th>DOB</th>
+          <th>Needs Coverage</th>
+          <th>Other Coverage Access</th>
+          <th>Tobacco User</th>
+          <th>Takes Prescriptions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for member in household_members %}
+          <tr>
+            <td>{{ member.first_name }} {{ member.last_name }}</td>
+            <td>{{ member.get_role_display }}</td>
+            <td>{{ member.date_of_birth }}</td>
+            <td>{% if member.needs_coverage %}Yes{% else %}No{% endif %}</td>
+            <td>{% if member.other_coverage_access %}Yes{% else %}No{% endif %}</td>
+            <td>{% if member.tobacco_user %}Yes{% else %}No{% endif %}</td>
+            <td>{% if member.takes_prescriptions %}Yes{% else %}No{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No household members saved.</p>
+  {% endif %}
+
+  <h2>Household Medication Summary</h2>
+  {% if household_summaries %}
+    {% for summary in household_summaries %}
+      <h3>{{ summary.member.first_name }} {{ summary.member.last_name }}</h3>
+      {% if summary.medications %}
+        <ul>
+          {% for medication in summary.medications %}
+            <li>
+              {{ medication.drug_name }}
+              {% if medication.dosage_strength %} {{ medication.dosage_strength }}{% endif %}
+              {% if medication.frequency %}, {{ medication.frequency }}{% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>No medications listed.</p>
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    <p>No household members saved.</p>
+  {% endif %}
+
+  <h2>Selected modules (internal)</h2>
+  <ul>
+    {% for module in modules %}
+      <li>{{ module|title }}</li>
+    {% empty %}
+      <li>-</li>
+    {% endfor %}
+  </ul>
+
+  <h2>Scores</h2>
+  <ul>
+    <li><strong>Coverage Score:</strong> {{ coverage_score }} / 100</li>
+    <li><strong>Gap Risk Score:</strong> {{ gap_risk_score }}</li>
+  </ul>
+
+  <h2>Findings overview</h2>
+  <ul>
+    <li>Critical: {{ severity_counts.critical }}</li>
+    <li>High: {{ severity_counts.high }}</li>
+    <li>Medium: {{ severity_counts.medium }}</li>
+    <li>Low: {{ severity_counts.low }}</li>
+  </ul>
+
+  <h2>Health findings (Hutchins)</h2>
+  {% if health_findings %}
+    <ul>
+      {% for finding in health_findings %}
+        <li><strong>{{ finding.get_severity_display }}</strong>: {{ finding.title }} ({{ finding.points }} pts)</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>None.</p>
+  {% endif %}
+
+  <h2>Non-health findings (Partner referrals)</h2>
+  {% if partner_findings %}
+    <ul>
+      {% for finding in partner_findings %}
+        <li><strong>{{ finding.category|title }} - {{ finding.get_severity_display }}</strong>: {{ finding.title }} ({{ finding.points }} pts)</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>None.</p>
+  {% endif %}
+
+  <h2>Referral opportunities</h2>
+  {% if referrals_by_category %}
+    {% for category, items in referrals_by_category.items %}
+      <h3>{{ category|title }}</h3>
+      <ul>
+        {% for referral in items %}
+          <li>({{ referral.severity|title }}) {{ referral.get_status_display }} - {{ referral.notes }}</li>
+        {% endfor %}
+      </ul>
+    {% endfor %}
+  {% else %}
+    <p>None.</p>
+  {% endif %}
+
+  <h2>Collected answers</h2>
+  {% if answers %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Question</th>
+          <th>Answer</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for answer in answers %}
+          <tr>
+            <td>{{ answer.question_text }}</td>
+            <td>{{ answer.answer_value|default:"-" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No saved answers.</p>
+  {% endif %}
+
+  <h2>Recommended talking points</h2>
+  {% if talking_points %}
+    <ol>
+      {% for point in talking_points %}
+        <li>{{ point }}</li>
+      {% endfor %}
+    </ol>
+  {% else %}
+    <p>None yet.</p>
+  {% endif %}
+{% endblock %}

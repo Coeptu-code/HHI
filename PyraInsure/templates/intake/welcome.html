@@ -1,24 +1,36 @@
 {% extends "intake/public_base.html" %}
 
-{% block title %}Welcome - Hutchins Intake{% endblock %}
+{% block title %}Welcome{% endblock %}
 
 {% block header_right %}
-  <div class="trust-chip" title="No spam">No spam</div>
+  <span class="chip outline" style="font-size: 11px;">No spam</span>
 {% endblock %}
 
 {% block content %}
-  <h1>Let's get you set up.</h1>
-  <p>Thanks for taking a moment to share a few details before your consultation.</p>
-  <p>
-    This intake helps Hutchins Health Insurance prepare for your call. We primarily provide health insurance guidance.
-    We may also ask a few questions about other coverage needs to identify possible gaps and (only with your consent)
-    connect you with licensed partner agents for those insurance lines.
-  </p>
-  <ul class="helper-list">
-    <li>Answer what you know - "Not sure" is totally fine.</li>
-    <li>You can review anything with your agent on the call.</li>
-  </ul>
-  <div class="actions" style="justify-content: flex-end;">
-    <a class="button" href="{{ start_url }}">Start intake</a>
+  <div class="col gap-4">
+    <!-- Avery intro -->
+    <div class="row gap-3" style="align-items: center; margin-bottom: 8px;">
+      <span class="avatar md bg-mg">A</span>
+      <div>
+        <div style="font-size: 13px; font-weight: 600;">Avery</div>
+        <div class="muted" style="font-size: 12px;">Your prep coach</div>
+      </div>
+    </div>
+
+    <!-- Welcome message -->
+    <div class="bubble coach">
+      <p style="margin: 0;">Hi there! Let's get you set up. I'll ask a few questions to prepare your agent for your call.</p>
+      <p style="margin: 0;">You can skip any question, and there are no wrong answers — just answer honestly.</p>
+    </div>
+
+    <!-- Info card -->
+    <div class="card card-pad-sm" style="border-left: 4px solid var(--teal);">
+      <p style="margin: 0; font-size: 13px; line-height: 1.5; color: var(--ink-2);">
+        This intake helps prepare for your call. We provide health insurance guidance and (with your consent) connect you with partner agents for other coverage needs.
+      </p>
+    </div>
+
+    <!-- CTA -->
+    <a class="btn brand lg full" href="{{ start_url }}">Let's go →</a>
   </div>
 {% endblock %}

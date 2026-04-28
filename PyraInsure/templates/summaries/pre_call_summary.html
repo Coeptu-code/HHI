@@ -1,167 +1,195 @@
 {% extends "base.html" %}
 
 {% block title %}Pre-call Summary{% endblock %}
+{% block page_title %}{% if customer %}{{ customer.first_name }} {{ customer.last_name }}{% else %}Unknown Client{% endif %} — Pre-call{% endblock %}
+{% block page_actions %}{% if customer %}<a class="btn ghost" href="{% url 'customer_detail' customer.id %}">← Customer</a>{% endif %}{% endblock %}
 
 {% block content %}
-  <h1>Pre-call Summary</h1>
+  <!-- Header card with gradient -->
+  <div class="card card-pad" style="background: linear-gradient(135deg, #fdf1e8, #ecf6f4); margin-bottom: 24px;">
+    <div class="row gap-4" style="align-items: flex-start;">
+      <span class="avatar xl bg-mg" style="flex-shrink: 0;">
+        {% if customer %}
+          {{ customer.first_name|first }}{{ customer.last_name|first }}
+        {% else %}
+          ?
+        {% endif %}
+      </span>
+      <div style="flex: 1;">
+        <h2 class="serif" style="margin: 0 0 4px 0; font-size: 20px;">
+          {% if customer %}{{ customer.first_name }} {{ customer.last_name }}{% else %}Unknown Client{% endif %}
+        </h2>
+        <small class="muted">Submitted {{ submission.created_at|date:"M j, Y" }}</small>
+        <div class="row gap-2" style="margin-top: 12px; flex-wrap: wrap;">
+          <span class="chip outline">{{ health_findings|length }} health gaps</span>
+          <span class="chip outline">{{ partner_findings|length }} referral gaps</span>
+          <span class="chip good">Score: {{ coverage_score }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <h2>Client</h2>
-  {% if customer %}
-    <p>
-      <strong>{{ customer.first_name }} {{ customer.last_name }}</strong><br />
-      {% if customer.email %}Email: {{ customer.email }}<br />{% endif %}
-      {% if customer.phone %}Phone: {{ customer.phone }}<br />{% endif %}
-      {% if customer.state %}State: {{ customer.state }}<br />{% endif %}
-      {% if customer.preferred_contact_method %}Preferred contact: {{ customer.get_preferred_contact_method_display }}{% endif %}
-    </p>
-    <p><a href="{% url 'customer_detail' customer.id %}">View customer record</a></p>
-  {% else %}
-    <p>No customer record linked.</p>
-  {% endif %}
-
-  <h2>Household</h2>
-  {% if household_members %}
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Member</th>
-          <th>Role</th>
-          <th>DOB</th>
-          <th>Needs Coverage</th>
-          <th>Other Coverage Access</th>
-          <th>Tobacco User</th>
-          <th>Takes Prescriptions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for member in household_members %}
-          <tr>
-            <td>{{ member.first_name }} {{ member.last_name }}</td>
-            <td>{{ member.get_role_display }}</td>
-            <td>{{ member.date_of_birth }}</td>
-            <td>{% if member.needs_coverage %}Yes{% else %}No{% endif %}</td>
-            <td>{% if member.other_coverage_access %}Yes{% else %}No{% endif %}</td>
-            <td>{% if member.tobacco_user %}Yes{% else %}No{% endif %}</td>
-            <td>{% if member.takes_prescriptions %}Yes{% else %}No{% endif %}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <p>No household members saved.</p>
-  {% endif %}
-
-  <h2>Household Medication Summary</h2>
-  {% if household_summaries %}
-    {% for summary in household_summaries %}
-      <h3>{{ summary.member.first_name }} {{ summary.member.last_name }}</h3>
-      {% if summary.medications %}
-        <ul>
-          {% for medication in summary.medications %}
-            <li>
-              {{ medication.drug_name }}
-              {% if medication.dosage_strength %} {{ medication.dosage_strength }}{% endif %}
-              {% if medication.frequency %}, {{ medication.frequency }}{% endif %}
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p>No medications listed.</p>
-      {% endif %}
-    {% endfor %}
-  {% else %}
-    <p>No household members saved.</p>
-  {% endif %}
-
-  <h2>Selected modules (internal)</h2>
-  <ul>
-    {% for module in modules %}
-      <li>{{ module|title }}</li>
-    {% empty %}
-      <li>-</li>
-    {% endfor %}
-  </ul>
-
-  <h2>Scores</h2>
-  <ul>
-    <li><strong>Coverage Score:</strong> {{ coverage_score }} / 100</li>
-    <li><strong>Gap Risk Score:</strong> {{ gap_risk_score }}</li>
-  </ul>
-
-  <h2>Findings overview</h2>
-  <ul>
-    <li>Critical: {{ severity_counts.critical }}</li>
-    <li>High: {{ severity_counts.high }}</li>
-    <li>Medium: {{ severity_counts.medium }}</li>
-    <li>Low: {{ severity_counts.low }}</li>
-  </ul>
-
-  <h2>Health findings (Hutchins)</h2>
-  {% if health_findings %}
-    <ul>
-      {% for finding in health_findings %}
-        <li><strong>{{ finding.get_severity_display }}</strong>: {{ finding.title }} ({{ finding.points }} pts)</li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <p>None.</p>
-  {% endif %}
-
-  <h2>Non-health findings (Partner referrals)</h2>
-  {% if partner_findings %}
-    <ul>
-      {% for finding in partner_findings %}
-        <li><strong>{{ finding.category|title }} - {{ finding.get_severity_display }}</strong>: {{ finding.title }} ({{ finding.points }} pts)</li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <p>None.</p>
-  {% endif %}
-
-  <h2>Referral opportunities</h2>
-  {% if referrals_by_category %}
-    {% for category, items in referrals_by_category.items %}
-      <h3>{{ category|title }}</h3>
-      <ul>
-        {% for referral in items %}
-          <li>({{ referral.severity|title }}) {{ referral.get_status_display }} - {{ referral.notes }}</li>
-        {% endfor %}
-      </ul>
-    {% endfor %}
-  {% else %}
-    <p>None.</p>
-  {% endif %}
-
-  <h2>Collected answers</h2>
-  {% if answers %}
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Question</th>
-          <th>Answer</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for answer in answers %}
-          <tr>
-            <td>{{ answer.question_text }}</td>
-            <td>{{ answer.answer_value|default:"-" }}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <p>No saved answers.</p>
-  {% endif %}
-
-  <h2>Recommended talking points</h2>
+  <!-- Talking points grid -->
   {% if talking_points %}
-    <ol>
-      {% for point in talking_points %}
-        <li>{{ point }}</li>
-      {% endfor %}
-    </ol>
-  {% else %}
-    <p>None yet.</p>
+    <div style="margin-bottom: 24px;">
+      <h3 class="serif" style="margin: 0 0 16px 0; font-size: 16px;">Key talking points</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px;">
+        {% for point in talking_points %}
+          <div class="card card-pad-sm">
+            <p style="font-size: 14px; margin: 0; line-height: 1.5;">{{ point }}</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Two-column data section -->
+  <div class="row gap-4" style="align-items: start;">
+    <!-- Left column -->
+    <div style="flex: 1.5;">
+      <!-- Household -->
+      <div class="card card-pad" style="margin-bottom: 24px;">
+        <h3 class="serif" style="margin: 0 0 16px 0; font-size: 16px;">Household</h3>
+        {% if household_members %}
+          <table class="tbl" style="width: 100%;">
+            <thead>
+              <tr>
+                <th>Member</th>
+                <th>Role</th>
+                <th>Needs coverage</th>
+                <th>Prescriptions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for member in household_members %}
+                <tr>
+                  <td style="font-size: 13px;">{{ member.first_name }} {{ member.last_name }}</td>
+                  <td style="font-size: 13px;">{{ member.get_role_display }}</td>
+                  <td style="font-size: 13px;">{% if member.needs_coverage %}Yes{% else %}No{% endif %}</td>
+                  <td style="font-size: 13px;">{% if member.takes_prescriptions %}Yes{% else %}No{% endif %}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p class="muted" style="margin: 0; font-size: 13px;">No household members saved.</p>
+        {% endif %}
+      </div>
+
+      <!-- Medications -->
+      <div class="card card-pad" style="margin-bottom: 24px;">
+        <h3 class="serif" style="margin: 0 0 16px 0; font-size: 16px;">Medications</h3>
+        {% if household_summaries %}
+          <div class="col gap-3">
+            {% for summary in household_summaries %}
+              {% if summary.medications %}
+                <div class="card card-pad-sm" style="background: var(--surface);">
+                  <div style="font-size: 13px; font-weight: 500; margin-bottom: 8px;">{{ summary.member.first_name }} {{ summary.member.last_name }}</div>
+                  <ul style="margin: 0; padding-left: 20px; font-size: 13px;">
+                    {% for med in summary.medications %}
+                      <li>{{ med.drug_name }}{% if med.dosage_strength %} {{ med.dosage_strength }}{% endif %}{% if med.frequency %}, {{ med.frequency }}{% endif %}</li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="muted" style="margin: 0; font-size: 13px;">No medications recorded.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right column -->
+    <div style="flex: 1;">
+      <!-- Findings -->
+      <div class="card card-pad" style="margin-bottom: 24px;">
+        <h3 class="serif" style="margin: 0 0 16px 0; font-size: 16px;">Findings</h3>
+        {% if health_findings or partner_findings %}
+          <table class="tbl" style="width: 100%; font-size: 13px;">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Severity</th>
+                <th>Points</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for finding in health_findings %}
+                <tr>
+                  <td>{{ finding.title }}</td>
+                  <td><span class="chip outline" style="font-size: 11px;">{{ finding.get_severity_display }}</span></td>
+                  <td>{{ finding.points }}</td>
+                </tr>
+              {% endfor %}
+              {% for finding in partner_findings %}
+                <tr>
+                  <td>{{ finding.title }}</td>
+                  <td><span class="chip outline" style="font-size: 11px;">{{ finding.get_severity_display }}</span></td>
+                  <td>{{ finding.points }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p class="muted" style="margin: 0; font-size: 13px;">No findings.</p>
+        {% endif %}
+      </div>
+
+      <!-- Answers -->
+      <div class="card card-pad">
+        <h3 class="serif" style="margin: 0 0 16px 0; font-size: 16px;">Answers</h3>
+        {% if answers %}
+          <table class="tbl" style="width: 100%; font-size: 13px;">
+            <thead>
+              <tr>
+                <th>Question</th>
+                <th>Answer</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for answer in answers %}
+                <tr>
+                  <td>{{ answer.question_text }}</td>
+                  <td>{{ answer.answer_value|default:"-" }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p class="muted" style="margin: 0; font-size: 13px;">No saved answers.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Referrals (if any) -->
+  {% if referrals_by_category %}
+    <div style="margin-top: 24px;">
+      <h3 class="serif" style="margin: 0 0 16px 0; font-size: 16px;">Referral opportunities</h3>
+      <div class="row gap-4" style="flex-wrap: wrap;">
+        {% for category, items in referrals_by_category.items %}
+          <div class="card card-pad" style="flex: 1; min-width: 280px;">
+            <h4 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600;">{{ category|title }}</h4>
+            <table class="tbl" style="width: 100%; font-size: 12px;">
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for referral in items %}
+                  <tr>
+                    <td><span class="chip outline" style="font-size: 10px;">{{ referral.get_status_display }}</span></td>
+                    <td>{{ referral.notes|truncatewords:5 }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
   {% endif %}
 {% endblock %}

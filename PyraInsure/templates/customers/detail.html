@@ -1,29 +1,96 @@
 {% extends "base.html" %}
 
 {% block title %}Customer{% endblock %}
+{% block page_title %}{{ customer.first_name }} {{ customer.last_name }}{% endblock %}
+{% block page_subtitle %}<small class="muted">{{ customer.email }}{% if customer.phone %} · {{ customer.phone }}{% endif %}</small>{% endblock %}
+
+{% block page_actions %}
+  {% if customer.email %}<a class="btn ghost" href="mailto:{{ customer.email }}">Email</a>{% endif %}
+  {% if customer.phone %}<a class="btn ghost" href="tel:{{ customer.phone }}">Call</a>{% endif %}
+{% endblock %}
 
 {% block content %}
-  <h1>Customer</h1>
+  <div style="display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start;">
+    <!-- Left column -->
+    <div class="col gap-4">
+      <!-- Submissions card -->
+      <div class="card card-pad">
+        <h3 class="serif" style="margin: 0 0 16px 0; font-size: 16px;">Submissions</h3>
+        {% if submissions %}
+          <table class="tbl" style="width: 100%;">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in submissions %}
+                <tr>
+                  <td style="font-size: 13px;">{{ s.created_at|date:"M j, Y" }}</td>
+                  <td>
+                    {% if s.status == "submitted" %}
+                      <span class="chip good dot">Submitted</span>
+                    {% else %}
+                      <span class="chip outline">{{ s.get_status_display }}</span>
+                    {% endif %}
+                  </td>
+                  <td style="text-align: right;">
+                    <a href="{% url 'pre_call_summary' s.id %}" class="btn sm outline">Summary</a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p class="muted" style="margin: 0; font-size: 13px;">No submissions yet.</p>
+        {% endif %}
+      </div>
 
-  <p>
-    <strong>{{ customer.first_name }} {{ customer.last_name }}</strong><br />
-    {% if customer.email %}Email: {{ customer.email }}<br />{% endif %}
-    {% if customer.phone %}Phone: {{ customer.phone }}<br />{% endif %}
-    {% if customer.state %}State: {{ customer.state }}<br />{% endif %}
-    {% if customer.preferred_contact_method %}Preferred contact: {{ customer.get_preferred_contact_method_display }}{% endif %}
-  </p>
+      <!-- Activity timeline -->
+      <div class="card card-pad">
+        <h3 class="serif" style="margin: 0 0 16px 0; font-size: 16px;">Activity</h3>
+        {% if submissions %}
+          <div class="col gap-3">
+            {% for s in submissions %}
+              <div class="row gap-3" style="align-items: flex-start;">
+                <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--orange); margin-top: 6px; flex-shrink: 0;"></div>
+                <div style="flex: 1;">
+                  <div style="font-size: 13px; font-weight: 500;">Intake submitted</div>
+                  <small class="muted">{{ s.created_at|date:"M j, Y" }}</small>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="muted" style="margin: 0; font-size: 13px;">No activity yet.</p>
+        {% endif %}
+      </div>
+    </div>
 
-  <h2>Submissions</h2>
-  {% if submissions %}
-    <ul>
-      {% for s in submissions %}
-        <li>
-          Submission {{ s.id }} — {{ s.get_status_display }} — {{ s.created_at }}
-          <a href="{% url 'pre_call_summary' s.id %}">Summary</a>
-        </li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <p>No submissions.</p>
-  {% endif %}
+    <!-- Right sidebar (sticky) -->
+    <div style="position: sticky; top: 16px;">
+      <!-- CoveraGap ring -->
+      <div class="card card-pad col gap-4" style="align-items: center; text-align: center;">
+        <div class="ring-wrap" data-ring-value="0" data-ring-size="180" style="position: relative; width: 180px; height: 180px;">
+          <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+            <span class="serif" style="font-size: 32px; font-weight: 700; color: var(--ink);">—</span>
+            <small class="muted">Score pending</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      {% if submissions.first %}
+        <a class="btn brand full" href="{% url 'pre_call_summary' submissions.first.id %}" style="margin-top: 16px;">Pre-call summary →</a>
+      {% endif %}
+
+      <!-- Contact card -->
+      <div class="card card-pad-sm" style="margin-top: 16px;">
+        {% if customer.state %}<div style="font-size: 12px; margin-bottom: 8px;"><strong>State:</strong> {{ customer.state }}</div>{% endif %}
+        {% if customer.preferred_contact_method %}<div style="font-size: 12px;"><strong>Preferred:</strong> {{ customer.get_preferred_contact_method_display }}</div>{% endif %}
+      </div>
+    </div>
+  </div>
 {% endblock %}

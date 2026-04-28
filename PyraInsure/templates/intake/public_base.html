@@ -4,36 +4,31 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#6d28d9" />
-    <title>{% block title %}Hutchins Intake{% endblock %}</title>
+    <meta name="theme-color" content="#fbf7f2" />
+    <title>{% block title %}PyraInsure Intake{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/intake.css' %}" />
   </head>
-  <body>
-    <div class="intake-shell">
-      <header class="intake-header">
-        <div class="brand" aria-label="Hutchins Health Insurance">
-          <div class="brand-mark" aria-hidden="true">H</div>
-          <div class="brand-text">
-            <div class="brand-name">Hutchins</div>
-            <div class="brand-sub">Secure intake - 3-5 minutes</div>
-          </div>
-        </div>
+  <body class="hifi" style="background: var(--bg); min-height: 100vh; margin: 0;">
+    <div style="max-width: 480px; margin: 0 auto; padding: 20px 16px 48px; min-height: 100vh; display: flex; flex-direction: column; gap: 16px;">
+      <header class="row between" style="align-items: center;">
+        <img src="{% static 'img/pyrainsure-logo-orange-transparent.png' %}" alt="PyraInsure" style="height: 30px;">
         {% block header_right %}{% endblock %}
       </header>
 
-      <main>
-        <section class="intake-card" data-intake-autofocus>
+      <main style="flex: 1;">
+        <section class="card card-pad-lg col gap-4" data-intake-autofocus>
           {% block card_top %}{% endblock %}
           {% block content %}{% endblock %}
         </section>
       </main>
 
-      <footer class="intake-footer">
+      <footer style="font-size: 12px; color: var(--ink-4); text-align: center;">
         <small>We only use this info to prepare for your conversation.</small>
       </footer>
     </div>
 
     <script src="{% static 'js/intake.js' %}"></script>
+    <script src="{% static 'js/hifi-animations.js' %}"></script>
     {% block extra_scripts %}{% endblock %}
   </body>
 </html>

@@ -1,0 +1,335 @@
+/* PyraInsure wireframes — sketchy Excalidraw vibe */
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Kalam:wght@300;400;700&family=Architects+Daughter&family=Patrick+Hand&display=swap');
+
+:root {
+  --ink: #1f2024;
+  --ink-soft: #4a4d55;
+  --ink-faint: #8a8d96;
+  --paper: #fafaf6;
+  --paper-2: #f3f1e8;
+  --line: #1f2024;
+  --accent: #d97a3c;       /* warm orange — Noom-ish */
+  --accent-soft: #fde7d6;
+  --accent-2: #4a8c8c;     /* teal */
+  --accent-2-soft: #d8ebe9;
+  --good: #4a8c5c;
+  --good-soft: #dcecdf;
+  --warn: #c8893a;
+  --warn-soft: #f7e6c5;
+  --bad: #b85544;
+  --bad-soft: #f5dcd6;
+}
+
+body.sketch {
+  background:
+    radial-gradient(circle at 20% 10%, #faf8ee 0%, transparent 40%),
+    radial-gradient(circle at 80% 80%, #f3eedc 0%, transparent 50%),
+    #f6f3e7;
+  color: var(--ink);
+  font-family: 'Kalam', 'Caveat', cursive;
+}
+
+.hand { font-family: 'Kalam', cursive; }
+.hand-title { font-family: 'Caveat', cursive; font-weight: 700; letter-spacing: 0.2px; }
+.hand-ui { font-family: 'Patrick Hand', cursive; }
+.hand-tight { font-family: 'Architects Daughter', cursive; }
+
+/* Sketch box: irregular hand-drawn rectangle via SVG border-image-ish using box-shadow + filter */
+.sk-box {
+  background: var(--paper);
+  border: 2.2px solid var(--ink);
+  border-radius: 14px 12px 16px 11px / 13px 15px 11px 14px;
+  box-shadow: 3px 3px 0 -1px rgba(31,32,36,0.18), 6px 6px 0 -3px rgba(31,32,36,0.10);
+  position: relative;
+}
+.sk-box.tight { border-radius: 8px 9px 7px 10px / 9px 8px 10px 7px; }
+.sk-box.dashed { border-style: dashed; }
+.sk-box.dotted { border-style: dotted; border-width: 2.6px; }
+.sk-box.thick { border-width: 3px; }
+
+.sk-fill-paper { background: var(--paper); }
+.sk-fill-2 { background: var(--paper-2); }
+.sk-fill-accent { background: var(--accent-soft); }
+.sk-fill-accent2 { background: var(--accent-2-soft); }
+.sk-fill-good { background: var(--good-soft); }
+.sk-fill-warn { background: var(--warn-soft); }
+.sk-fill-bad { background: var(--bad-soft); }
+
+/* Hatch fill for placeholder regions */
+.sk-hatch {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(31,32,36,0.08) 0,
+    rgba(31,32,36,0.08) 1px,
+    transparent 1px,
+    transparent 7px
+  );
+}
+.sk-hatch-accent {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(217,122,60,0.22) 0,
+    rgba(217,122,60,0.22) 1.5px,
+    transparent 1.5px,
+    transparent 7px
+  );
+  background-color: var(--accent-soft);
+}
+
+/* Wobble: applied via class on the root to subtly distort children */
+.sk-wobble { filter: url(#sk-wobble); }
+.sk-wobble-strong { filter: url(#sk-wobble-strong); }
+
+/* Sketch button */
+.sk-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 16px;
+  padding: 8px 16px;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: 10px 12px 9px 13px / 11px 9px 13px 10px;
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: 2px 2px 0 0 var(--ink);
+  transition: transform .08s ease, box-shadow .08s ease;
+  text-decoration: none;
+}
+.sk-btn:hover { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 0 var(--ink); }
+.sk-btn:active { transform: translate(1px,1px); box-shadow: 1px 1px 0 0 var(--ink); }
+.sk-btn.primary { background: var(--accent); color: #fff; }
+.sk-btn.ghost { background: transparent; box-shadow: none; }
+.sk-btn.lg { font-size: 20px; padding: 12px 22px; }
+.sk-btn.full { width: 100%; justify-content: center; }
+.sk-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Sketch input */
+.sk-input {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 16px;
+  padding: 8px 12px;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: 8px 10px 7px 11px / 9px 8px 11px 8px;
+  width: 100%;
+  color: var(--ink);
+  outline: none;
+}
+.sk-input:focus { border-color: var(--accent); box-shadow: 2px 2px 0 0 var(--accent); }
+
+/* Sketch chip */
+.sk-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 13px;
+  padding: 3px 10px;
+  background: var(--paper);
+  border: 1.8px solid var(--ink);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.sk-chip.accent { background: var(--accent-soft); border-color: var(--accent); }
+.sk-chip.good { background: var(--good-soft); border-color: var(--good); }
+.sk-chip.warn { background: var(--warn-soft); border-color: var(--warn); }
+.sk-chip.bad  { background: var(--bad-soft);  border-color: var(--bad); }
+.sk-chip.muted { color: var(--ink-soft); border-color: var(--ink-faint); }
+
+/* Sketch underlines and arrows */
+.sk-underline {
+  background-image: linear-gradient(transparent calc(100% - 4px), var(--accent) 4px);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  padding-bottom: 2px;
+}
+.sk-strike {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  text-decoration-color: var(--ink-soft);
+}
+
+/* Annotation note */
+.sk-annot {
+  font-family: 'Caveat', cursive;
+  font-size: 16px;
+  color: var(--accent);
+  position: absolute;
+  pointer-events: none;
+  line-height: 1.05;
+}
+.sk-annot.hidden { display: none; }
+.sk-annot .arrow {
+  display: inline-block;
+}
+
+/* Phone frame (sketchy) */
+.sk-phone {
+  width: 360px;
+  background: var(--paper);
+  border: 2.5px solid var(--ink);
+  border-radius: 38px 36px 40px 35px / 38px 40px 36px 38px;
+  box-shadow: 4px 4px 0 -1px rgba(31,32,36,0.20), 10px 10px 0 -5px rgba(31,32,36,0.08);
+  padding: 10px;
+  position: relative;
+}
+.sk-phone .screen {
+  background: var(--paper);
+  border: 1.8px solid var(--ink);
+  border-radius: 30px 28px 32px 27px / 30px 32px 28px 30px;
+  height: 720px;
+  overflow: hidden;
+  position: relative;
+}
+.sk-phone .notch {
+  position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+  width: 90px; height: 18px; background: var(--ink); border-radius: 14px;
+}
+
+/* Status bar */
+.sk-status-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 22px 6px 22px;
+  font-family: 'Patrick Hand', cursive; font-size: 13px;
+}
+
+/* Generic helper */
+.muted { color: var(--ink-soft); }
+.faint { color: var(--ink-faint); }
+.row { display: flex; align-items: center; }
+.col { display: flex; flex-direction: column; }
+.gap-2 { gap: 8px; } .gap-3 { gap: 12px; } .gap-4 { gap: 16px; } .gap-6 { gap: 24px; }
+.between { justify-content: space-between; }
+.center { justify-content: center; align-items: center; }
+.grow { flex: 1; }
+.scroll { overflow: auto; }
+
+/* Annotation visibility toggle */
+body.no-annot .sk-annot { display: none; }
+body.no-color { filter: saturate(0.0); }
+body.no-color .sk-fill-accent,
+body.no-color .sk-fill-accent2,
+body.no-color .sk-fill-good,
+body.no-color .sk-fill-warn,
+body.no-color .sk-fill-bad { background: #efece1; }
+
+/* Tap target highlight in interactive mode */
+.sk-tap {
+  cursor: pointer;
+  transition: transform .1s ease;
+}
+.sk-tap:hover { transform: translateY(-1px); }
+.sk-tap:active { transform: translateY(1px); }
+
+/* Progress dots / bar */
+.sk-dots { display: flex; gap: 6px; }
+.sk-dots .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  border: 1.6px solid var(--ink); background: var(--paper);
+}
+.sk-dots .dot.done { background: var(--ink); }
+.sk-dots .dot.cur { background: var(--accent); border-color: var(--accent); }
+
+.sk-progress {
+  height: 10px; background: var(--paper);
+  border: 1.8px solid var(--ink); border-radius: 8px;
+  overflow: hidden; position: relative;
+}
+.sk-progress .fill {
+  height: 100%; background: var(--accent);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(255,255,255,0.18) 0,
+    rgba(255,255,255,0.18) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+  transition: width .45s cubic-bezier(.2,.8,.2,1.05);
+}
+
+/* Chat bubble */
+.sk-bubble {
+  max-width: 85%;
+  padding: 10px 14px;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: 16px 18px 16px 6px / 16px 16px 18px 8px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 16px;
+  line-height: 1.35;
+  box-shadow: 2px 2px 0 -1px rgba(31,32,36,0.18);
+}
+.sk-bubble.coach { background: #fff7ec; border-color: var(--ink); align-self: flex-start; }
+.sk-bubble.user { background: var(--accent-soft); border-color: var(--accent); align-self: flex-end; border-radius: 18px 16px 6px 16px / 16px 18px 8px 16px; }
+
+/* Coach avatar */
+.coach-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--ink);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: 'Caveat', cursive; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+}
+
+/* Typing indicator */
+.typing { display: inline-flex; gap: 3px; padding: 10px 14px; }
+.typing span {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--ink-soft);
+  animation: bounce 1s infinite ease-in-out;
+}
+.typing span:nth-child(2) { animation-delay: .15s; }
+.typing span:nth-child(3) { animation-delay: .3s; }
+@keyframes bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: .4; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+@keyframes pop-in {
+  0%   { transform: scale(.8) translateY(6px); opacity: 0; }
+  60%  { transform: scale(1.04) translateY(0);  opacity: 1; }
+  100% { transform: scale(1)   translateY(0);  opacity: 1; }
+}
+.pop-in { animation: pop-in .35s cubic-bezier(.2,.8,.2,1.1) both; }
+
+@keyframes confetti-fall {
+  0% { transform: translateY(-8px) rotate(0deg); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(220px) rotate(360deg); opacity: 0; }
+}
+.confetti-piece {
+  position: absolute; width: 8px; height: 12px; top: 0;
+  animation: confetti-fall 1.6s ease-in forwards;
+}
+
+/* Card swipe (variation B intake) */
+.swipe-stack { position: relative; height: 100%; }
+.swipe-card {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  padding: 24px;
+}
+
+/* Sketch ring */
+.sk-ring {
+  position: relative;
+  width: 200px; height: 200px;
+}
+
+/* Tab buttons */
+.sk-tabs { display: flex; gap: 6px; }
+.sk-tab {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 14px;
+  padding: 4px 12px;
+  border: 1.8px solid var(--ink);
+  background: var(--paper);
+  border-radius: 8px 9px 7px 10px / 9px 8px 10px 7px;
+  cursor: pointer;
+}
+.sk-tab.active { background: var(--ink); color: #fff; }
+
+/* Tap caret used in interactive flows to hint clickability */
+.tap-hint::after {
+  content: " ›";
+  color: var(--accent);
+  font-weight: 700;
+}

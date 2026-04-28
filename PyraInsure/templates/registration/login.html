@@ -1,13 +1,91 @@
-{% extends "base.html" %}
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Agent Login — PyraInsure{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}" />
+  </head>
+  <body class="hifi" style="height: 100vh; display: grid; grid-template-columns: 1fr 1fr; margin: 0;">
+    <!-- Left: form panel -->
+    <div class="col center" style="padding: 60px;">
+      <div style="width: 380px;">
+        <img src="{% static 'img/pyrainsure-logo-orange-transparent.png' %}" alt="PyraInsure" style="height: 40px; margin-bottom: 24px;">
+        <h1 class="serif" style="font-size: 32px; margin: 0 0 8px 0;">Welcome back.</h1>
+        <p class="muted" style="margin: 0 0 24px 0;">Sign in to keep prepping calls, sending intakes, and closing gaps.</p>
 
-{% block title %}Agent Login{% endblock %}
+        <form method="post" class="col gap-4">
+          {% csrf_token %}
 
-{% block content %}
-  <h1>Agent Login</h1>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Login</button>
-  </form>
-{% endblock %}
+          {% if form.non_field_errors %}
+            <div class="card tint-orange card-pad-sm" style="font-size: 13px; color: var(--bad);">
+              {% for error in form.non_field_errors %}
+                <div>{{ error }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <label class="field">
+            Email
+            <input class="input" type="email" name="username" placeholder="agent@example.com" autocomplete="username" required>
+            {% if form.username.errors %}
+              <small style="color: var(--bad);">{{ form.username.errors.0 }}</small>
+            {% endif %}
+          </label>
+
+          <label class="field">
+            Password
+            <input class="input" type="password" name="password" autocomplete="current-password" required>
+            {% if form.password.errors %}
+              <small style="color: var(--bad);">{{ form.password.errors.0 }}</small>
+            {% endif %}
+          </label>
+
+          <button class="btn brand lg full" type="submit">Sign in</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Right: aurora marketing panel -->
+    <div class="login-aurora" style="background: linear-gradient(155deg, #fdf1e8, #ecf6f4); position: relative; overflow: hidden; padding: 60px;">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="blob blob-3"></div>
+      <div class="blob blob-4"></div>
+      <div class="sheen"></div>
+      <div class="sparkle s1"></div>
+      <div class="sparkle s2"></div>
+      <div class="sparkle s3"></div>
+      <div class="sparkle s4"></div>
+
+      <div style="position: relative; z-index: 2; display: flex; flex-direction: column; gap: 20px;">
+        <div>
+          <span class="chip orange dot" style="margin-bottom: 8px;">What's new</span>
+          <h2 class="serif" style="margin: 0; font-size: 20px; color: var(--ink);">Intake faster, close gaps quicker.</h2>
+        </div>
+
+        <div class="row gap-3">
+          <div class="card card-pad-sm" style="flex: 1; text-align: center;">
+            <div class="serif" style="font-size: 24px; font-weight: 700; color: var(--orange);">3.2x</div>
+            <small class="muted">Faster intake</small>
+          </div>
+          <div class="card card-pad-sm" style="flex: 1; text-align: center;">
+            <div class="serif" style="font-size: 24px; font-weight: 700; color: var(--teal);">87%</div>
+            <small class="muted">Completion rate</small>
+          </div>
+        </div>
+
+        <div class="card card-pad" style="border-left: 4px solid var(--orange);">
+          <p style="margin: 0; font-size: 14px; line-height: 1.5; color: var(--ink-2);">
+            <strong>"This intake flow is honestly the best tool I've used."</strong><br>
+            <small class="muted">Agent, Texas</small>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script src="{% static 'js/hifi-animations.js' %}"></script>
+  </body>
+</html>
 

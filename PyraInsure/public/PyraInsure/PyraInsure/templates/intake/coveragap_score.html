@@ -1,0 +1,56 @@
+{% extends "intake/public_base.html" %}
+
+{% block title %}CoveraGap&trade; Score - Hutchins{% endblock %}
+
+{% block content %}
+  {% if score_unavailable %}
+    <h1>CoveraGap&trade; Score</h1>
+    <p>Score not found or unavailable.</p>
+  {% else %}
+    <h1>CoveraGap&trade; Score</h1>
+    {% if customer %}
+      <p class="subtle">{{ customer.first_name }} {{ customer.last_name }}</p>
+    {% endif %}
+
+    <div class="score-grid">
+      <div class="score-box">
+        <div class="subtle">Overall Coverage Score</div>
+        <div class="score-value">{{ scorecard.overall_score }}/100</div>
+      </div>
+      <div class="score-box">
+        <div class="subtle">Gap Risk Score</div>
+        <div class="score-value">{{ scorecard.gap_risk_score }}</div>
+      </div>
+    </div>
+
+    <div class="inline-card">
+      <h2>Module breakdown</h2>
+      {% for module in scorecard.modules %}
+        <section class="module">
+          <h3>{{ module.label }}: {{ module.score }}/100</h3>
+          <p class="subtle">Gap Risk Score: {{ module.gap_points }}</p>
+          <h4>Items to review with your agent</h4>
+          {% if module.items_to_review %}
+            <ul>
+              {% for item in module.items_to_review %}
+                <li>{{ item }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>No major review items were identified from the answers provided for this area.</p>
+          {% endif %}
+        </section>
+      {% empty %}
+        <p>No score details are available.</p>
+      {% endfor %}
+    </div>
+
+    <div class="inline-card">
+      <p>
+        The CoveraGap&trade; Score is an educational estimate based only on the answers provided. It is not a coverage
+        determination, insurance recommendation, quote, or guarantee of eligibility.
+      </p>
+      <p class="subtle">Review these items with a licensed insurance professional before making coverage decisions.</p>
+    </div>
+  {% endif %}
+{% endblock %}

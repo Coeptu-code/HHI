@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PyraInsure — Full Fidelity (Variation A)</title>
+<link rel="stylesheet" href="hifi.css" />
+<style>
+  body { margin: 0; }
+  /* Canvas tweaks for hifi presentation */
+  .dc-section-title { font-family: 'Fraunces', serif !important; font-weight: 600 !important; }
+</style>
+</head>
+<body class="hifi">
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="hifi-prim.jsx"></script>
+  <script type="text/babel" src="hifi-screens-1.jsx"></script>
+  <script type="text/babel" src="hifi-screens-2.jsx"></script>
+  <script type="text/babel" src="hifi-screens-3.jsx"></script>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    function App() {
+      return (
+        <DesignCanvas title="PyraInsure — Full Fidelity (Variation A)" subtitle="Warm + human · 7 hi-fi screens · interactive mobile flow">
+          <DCSection id="agent" title="Agent · Desktop" subtitle="Login, dashboard, create link, customer, pre-call summary">
+            <DCArtboard id="login" label="① Login" width={1280} height={760}>
+              <div style={{ width: 1280, height: 760 }}><HiLoginA /></div>
+            </DCArtboard>
+            <DCArtboard id="dash" label="② Dashboard" width={1280} height={840}>
+              <div style={{ width: 1280, height: 840 }}><HiDashA /></div>
+            </DCArtboard>
+            <DCArtboard id="create" label="③ Create intake link" width={1280} height={900}>
+              <div style={{ width: 1280, height: 900 }}><HiCreateA /></div>
+            </DCArtboard>
+            <DCArtboard id="customer" label="④ Customer detail" width={1280} height={1080}>
+              <div style={{ width: 1280, height: 1080 }}><HiCustomerA /></div>
+            </DCArtboard>
+            <DCArtboard id="precall" label="⑤ Pre-call summary" width={1280} height={1280}>
+              <div style={{ width: 1280, height: 1280 }}><HiPrecallA /></div>
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="client" title="Client · Mobile" subtitle="Conversational intake with Avery, then animated coverage score">
+            <DCArtboard id="intake" label="⑥ Intake chat (interactive)" width={420} height={820}>
+              <div style={{ width: 420, height: 820, display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
+                <HiIntakeA />
+              </div>
+            </DCArtboard>
+            <DCArtboard id="gap" label="⑦ Coverage gap score (animated)" width={420} height={820}>
+              <div style={{ width: 420, height: 820, display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
+                <HiGapA />
+              </div>
+            </DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

@@ -34,22 +34,22 @@ class DynamicQuestionForm(forms.Form):
             "help_text": question.helper_text,
         }
         if question.field_type == "email":
-            return forms.EmailField(**common, widget=forms.EmailInput(attrs={"class": "input"}))
+            return forms.EmailField(**common)
         if question.field_type == "phone":
-            return forms.CharField(validators=[PHONE_VALIDATOR], **common, widget=forms.TextInput(attrs={"class": "input"}))
+            return forms.CharField(validators=[PHONE_VALIDATOR], **common)
         if question.field_type == "date":
             return forms.DateField(
                 **common,
-                widget=forms.DateInput(attrs={"type": "date", "class": "input"}),
+                widget=forms.DateInput(attrs={"type": "date"}),
                 input_formats=["%Y-%m-%d", "%m/%d/%Y", "%m-%d-%Y"],
             )
         if question.field_type == "bool":
             return forms.ChoiceField(choices=BOOL_CHOICES, widget=forms.RadioSelect, **common)
         if question.field_type == "select":
-            return forms.ChoiceField(choices=(("", "-- Select --"),) + tuple(question.choices), widget=forms.Select(attrs={"class": "select"}), **common)
+            return forms.ChoiceField(choices=(("", "-- Select --"),) + tuple(question.choices), **common)
         if question.field_type == "number":
-            return forms.IntegerField(widget=forms.NumberInput(attrs={"inputmode": "numeric", "class": "input"}), **common)
-        return forms.CharField(**common, widget=forms.TextInput(attrs={"class": "input"}))
+            return forms.IntegerField(widget=forms.NumberInput(attrs={"inputmode": "numeric"}), **common)
+        return forms.CharField(**common)
 
 
 class BasicInfoForm(DynamicQuestionForm):
@@ -84,11 +84,11 @@ class ConsentForm(forms.Form):
 
 
 class HouseholdMemberForm(forms.Form):
-    first_name = forms.CharField(label="First name", widget=forms.TextInput(attrs={"class": "input"}))
-    last_name = forms.CharField(label="Last name", required=False, widget=forms.TextInput(attrs={"class": "input"}))
+    first_name = forms.CharField(label="First name")
+    last_name = forms.CharField(label="Last name", required=False)
     date_of_birth = forms.DateField(
         label="Date of birth",
-        widget=forms.DateInput(attrs={"type": "date", "class": "input"}),
+        widget=forms.DateInput(attrs={"type": "date"}),
         input_formats=["%Y-%m-%d", "%m/%d/%Y", "%m-%d-%Y"],
     )
     needs_coverage = forms.BooleanField(label="Needs coverage", required=False, initial=True)
@@ -159,14 +159,13 @@ class PrescriptionMedicationForm(forms.Form):
         label="Search medication",
         required=False,
         help_text="Type at least 2 characters. If search is unavailable, enter the medication manually.",
-        widget=forms.TextInput(attrs={"class": "input"}),
     )
     selected_drug_id = forms.CharField(widget=forms.HiddenInput(), required=False)
     selected_drug_name = forms.CharField(widget=forms.HiddenInput(), required=False)
     normalized_drug_name = forms.CharField(widget=forms.HiddenInput(), required=False)
     source = forms.CharField(widget=forms.HiddenInput(), required=False, initial="rxterms")
-    dosage_strength = forms.CharField(label="Dosage / strength", required=False, widget=forms.TextInput(attrs={"class": "input"}))
-    frequency = forms.CharField(label="Frequency", required=False, widget=forms.TextInput(attrs={"class": "input"}))
+    dosage_strength = forms.CharField(label="Dosage / strength", required=False)
+    frequency = forms.CharField(label="Frequency", required=False)
 
     def clean(self) -> dict[str, Any]:
         cleaned = super().clean()

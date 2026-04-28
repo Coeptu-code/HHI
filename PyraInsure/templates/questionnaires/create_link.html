@@ -1,18 +1,170 @@
 {% extends "base.html" %}
 
-{% block title %}Create Questionnaire Link{% endblock %}
+{% block title %}New Intake Link{% endblock %}
+{% block page_title %}New intake link{% endblock %}
 
 {% block content %}
-  <h1>Create Questionnaire Link</h1>
+  <!-- Step indicator -->
+  <div class="row gap-3" style="justify-content: center; margin-bottom: 32px;">
+    <div class="step-indicator-item" style="display: flex; align-items: center; gap: 12px;">
+      <div class="step-circle" style="width: 32px; height: 32px; border-radius: 50%; background: var(--orange); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">1</div>
+      <div style="font-size: 13px; font-weight: 500;">Client</div>
+    </div>
+    <div style="width: 40px; height: 1px; background: var(--line); align-self: center;"></div>
+    <div class="step-indicator-item" style="display: flex; align-items: center; gap: 12px;">
+      <div class="step-circle" style="width: 32px; height: 32px; border-radius: 50%; background: var(--line); color: var(--ink-3); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">2</div>
+      <div style="font-size: 13px; font-weight: 500; color: var(--ink-3);">Customize</div>
+    </div>
+    <div style="width: 40px; height: 1px; background: var(--line); align-self: center;"></div>
+    <div class="step-indicator-item" style="display: flex; align-items: center; gap: 12px;">
+      <div class="step-circle" style="width: 32px; height: 32px; border-radius: 50%; background: var(--line); color: var(--ink-3); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">3</div>
+      <div style="font-size: 13px; font-weight: 500; color: var(--ink-3);">Review</div>
+    </div>
+  </div>
 
-  <form method="post">
-    {% csrf_token %}
-    <fieldset>
-      <legend>Modules to include (internal only)</legend>
-      {{ form.as_p }}
-      <p><small>Clients will see one blended intake form (no module sections).</small></p>
-    </fieldset>
+  <!-- Step 1: Client -->
+  <div data-step="1" class="card card-pad-lg col gap-4">
+    <div>
+      <h2 class="serif" style="margin: 0 0 8px 0; font-size: 20px;">Who is this intake for?</h2>
+      <p class="muted" style="margin: 0;">Create a new client or select an existing one.</p>
+    </div>
+    <label class="field">
+      Client name
+      <input class="input" type="text" placeholder="Jane Doe" data-client-only>
+    </label>
+    <label class="field">
+      Email
+      <input class="input" type="email" placeholder="jane@example.com" data-client-only>
+    </label>
+    <div class="row between" style="padding-top: 8px;">
+      <div></div>
+      <button class="btn brand" type="button" data-next="2">Next →</button>
+    </div>
+  </div>
 
-    <button type="submit">Create link</button>
-  </form>
+  <!-- Step 2: Customize -->
+  <div data-step="2" hidden class="card card-pad-lg col gap-4">
+    <div>
+      <h2 class="serif" style="margin: 0 0 8px 0; font-size: 20px;">Which modules apply?</h2>
+      <p class="muted" style="margin: 0;">Your client will see a blended intake form with all selected modules.</p>
+    </div>
+
+    <form method="post" class="col gap-2">
+      {% csrf_token %}
+
+      {% for field in form %}
+        {% if field.field.widget.input_type == "checkbox" %}
+          <label class="hover-row row between" style="padding: 12px; border-radius: 8px; cursor: pointer; user-select: none;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <svg class="ico" fill="currentColor" viewBox="0 0 24 24" style="color: var(--orange);">
+                {% if field.name == "include_health" %}
+                  <path d="M21 12c0 1.657-.895 3.253-2.457 4.338C17.915 18.646 16.07 19.5 14 19.5c-.823 0-1.61-.163-2.332-.465M7 12h10m0 0c0 1.657-.895 3.253-2.457 4.338C12.915 18.646 11.07 19.5 9 19.5c-2.07 0-3.915-.854-5.543-2.162C1.895 15.253 1 13.657 1 12c0-2.485 1.306-4.666 3.268-5.878"/>
+                {% elif field.name == "include_life" %}
+                  <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                {% elif field.name == "include_auto" %}
+                  <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                {% elif field.name == "include_home" %}
+                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.707.707a1 1 0 001.414-1.414l-7-7z"/>
+                {% elif field.name == "include_umbrella" %}
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm-7-8h14"/>
+                {% endif %}
+              </svg>
+              <div style="flex: 1;">
+                <div style="font-weight: 500;">{{ field.label }}</div>
+              </div>
+            </div>
+            {{ field }}
+          </label>
+        {% endif %}
+      {% endfor %}
+
+      <div class="row between" style="padding-top: 8px;">
+        <button class="btn ghost" type="button" data-back="1">← Back</button>
+        <button class="btn brand" type="button" data-next="3">Next →</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Step 3: Review & Send -->
+  <div data-step="3" hidden class="card card-pad-lg col gap-4">
+    <div>
+      <h2 class="serif" style="margin: 0 0 8px 0; font-size: 20px;">Ready to send?</h2>
+      <p class="muted" style="margin: 0;">Review the selected modules, then send the intake link to your client.</p>
+    </div>
+
+    <div class="card card-pad-sm" style="background: var(--surface);">
+      <div style="font-size: 12px; color: var(--ink-4); margin-bottom: 8px;">Modules</div>
+      <div class="row gap-2" style="flex-wrap: wrap;">
+        {% for field in form %}
+          {% if field.field.widget.input_type == "checkbox" %}
+            <span class="chip outline" data-module="{{ field.name }}" style="display: none;">{{ field.label }}</span>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <form method="post" class="col gap-4">
+      {% csrf_token %}
+      {% for field in form %}
+        {{ field }}
+      {% endfor %}
+      <div class="row between">
+        <button class="btn ghost" type="button" data-back="2">← Back</button>
+        <button class="btn brand lg" type="submit">Send intake link</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    const steps = document.querySelectorAll('[data-step]');
+    const backBtns = document.querySelectorAll('[data-back]');
+    const nextBtns = document.querySelectorAll('[data-next]');
+
+    nextBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        showStep(parseInt(btn.dataset.next));
+      });
+    });
+
+    backBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        showStep(parseInt(btn.dataset.back));
+      });
+    });
+
+    function showStep(n) {
+      steps.forEach(s => {
+        s.hidden = parseInt(s.dataset.step) !== n;
+      });
+      updateIndicator(n);
+      updateModuleChips();
+    }
+
+    function updateIndicator(n) {
+      document.querySelectorAll('.step-indicator-item').forEach((item, i) => {
+        const circle = item.querySelector('.step-circle');
+        const isActive = i + 1 <= n;
+        circle.style.background = isActive ? 'var(--orange)' : 'var(--line)';
+        circle.style.color = isActive ? 'white' : 'var(--ink-3)';
+      });
+    }
+
+    function updateModuleChips() {
+      const form = document.querySelector('form');
+      const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+      const chips = document.querySelectorAll('[data-module]');
+
+      chips.forEach(chip => chip.style.display = 'none');
+      checkboxes.forEach(cb => {
+        if (cb.checked) {
+          const chip = document.querySelector(`[data-module="${cb.name}"]`);
+          if (chip) chip.style.display = 'inline-flex';
+        }
+      });
+    }
+
+    showStep(1);
+  </script>
 {% endblock %}

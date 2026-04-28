@@ -1,24 +1,32 @@
 {% extends "intake/public_base.html" %}
 
-{% block title %}{{ step_label }} - Hutchins Intake{% endblock %}
+{% block title %}{{ step_label }}{% endblock %}
 
 {% block header_right %}
-  <div class="trust-chip" title="Private intake">Private session</div>
+  <span class="chip outline" style="font-size: 11px;">Private session</span>
 {% endblock %}
 
 {% block card_top %}
   {% if step_total %}
-    <div class="intake-card-top">
-      <div class="step-chip">Step {{ step_index }} of {{ step_total }}</div>
-      <div class="card-note">You can't break anything - just answer honestly.</div>
+    <!-- Avery header -->
+    <div class="row gap-3" style="align-items: center; margin-bottom: 16px;">
+      <span class="avatar md bg-mg">A</span>
+      <div>
+        <div style="font-size: 13px; font-weight: 600;">Avery</div>
+        <div class="muted" style="font-size: 12px;">Your prep coach</div>
+      </div>
     </div>
-    <div class="progress" aria-label="Progress">
-      <span style="width: {% widthratio step_index step_total 100 %}%"></span>
+
+    <!-- Progress bar -->
+    <div class="progress" style="margin-bottom: 16px;">
+      <span style="width: {% widthratio step_index step_total 100 %}%;"></span>
     </div>
+
+    <!-- Step label -->
+    <div class="bubble coach" style="margin: 0 0 16px 0;">{{ step_label }}</div>
   {% endif %}
 {% endblock %}
 
 {% block content %}
-  <h1>{{ step_label }}</h1>
   {% block step_body %}{% endblock %}
 {% endblock %}

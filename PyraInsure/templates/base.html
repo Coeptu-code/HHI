@@ -4,44 +4,68 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{% block title %}Hutchins Onboarding{% endblock %}</title>
+    <title>{% block title %}PyraInsure — Agent{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/app.css' %}" />
   </head>
-  <body>
-    <header class="topbar">
-      <div class="container">
-        <div class="brand">
-          <a href="{% url 'dashboard' %}">Hutchins Onboarding</a>
+  <body class="hifi">
+    <div class="agent-shell">
+      <aside class="sidebar">
+        <div style="margin-bottom: 24px;">
+          <img src="{% static 'img/pyrainsure-logo-orange-transparent.png' %}" alt="PyraInsure" style="height: 32px;">
         </div>
-        <nav class="nav">
-          {% if user.is_authenticated %}
-            <a href="{% url 'dashboard' %}">Dashboard</a>
-            <a href="{% url 'create_questionnaire_link' %}">Create Intake Link</a>
-            <a href="{% url 'logout' %}">Logout</a>
-          {% else %}
-            <a href="{% url 'login' %}">Agent Login</a>
-          {% endif %}
+
+        <nav class="col gap-2" style="flex: 1;">
+          <a href="{% url 'dashboard' %}" class="nav-item {% if active_nav == 'home' %}active{% endif %}" style="text-decoration: none;">
+            <svg class="ico" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-3m0 0l7-4 7 4M5 9v10a1 1 0 001 1h12a1 1 0 001-1V9m-9 16l-7-4m0 0H3m16 4l7-4m0 0v-5a2 2 0 00-2-2H5a2 2 0 00-2 2v5"></path></svg>
+            Dashboard
+          </a>
+          <a href="{% url 'create_questionnaire_link' %}" class="nav-item {% if active_nav == 'links' %}active{% endif %}" style="text-decoration: none;">
+            <svg class="ico" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.658 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+            Intake Links
+          </a>
+          <a href="#" class="nav-item {% if active_nav == 'customers' %}active{% endif %}" style="text-decoration: none;">
+            <svg class="ico" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 12H9m6 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Customers
+          </a>
         </nav>
+
+        <div style="border-top: 1px solid var(--line); padding-top: 16px; margin-top: auto;">
+          <div class="row gap-2" style="padding: 0 12px;">
+            <span class="avatar sm bg-mg" style="flex-shrink: 0;">
+              {{ user.first_name|first }}{{ user.last_name|first|default:'A' }}
+            </span>
+            <div class="col gap-1" style="min-width: 0;">
+              <div style="font-size: 13px; font-weight: 500; color: var(--ink-2);">{{ user.get_full_name|default:user.username }}</div>
+              <a href="{% url 'logout' %}" style="font-size: 12px; color: var(--ink-4); text-decoration: none; cursor: pointer;">Sign out</a>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <div class="agent-main">
+        <div class="row between" style="padding: 16px 32px; border-bottom: 1px solid var(--line); background: var(--surface);">
+          <div class="col">
+            <h2 class="serif" style="font-size: 20px; margin: 0;">{% block page_title %}{% endblock %}</h2>
+            {% block page_subtitle %}{% endblock %}
+          </div>
+          <div>{% block page_actions %}{% endblock %}</div>
+        </div>
+
+        {% if messages %}
+          <div style="padding: 16px 32px;">
+            {% for message in messages %}
+              <div class="card {% if message.tags %}tint-{{ message.tags }}{% endif %} card-pad-sm" style="margin-bottom: 12px;">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <div style="padding: 24px 32px;">
+          {% block content %}{% endblock %}
+        </div>
       </div>
-    </header>
+    </div>
 
-    <main class="container">
-      {% if messages %}
-        <ul class="messages">
-          {% for message in messages %}
-            <li class="message {{ message.tags }}">{{ message }}</li>
-          {% endfor %}
-        </ul>
-      {% endif %}
-
-      {% block content %}{% endblock %}
-    </main>
-
-    <footer class="footer">
-      <div class="container">
-        <small>&copy; {% now 'Y' %} Hutchins Health Insurance</small>
-      </div>
-    </footer>
     <script src="{% static 'js/app.js' %}"></script>
+    <script src="{% static 'js/hifi-animations.js' %}"></script>
   </body>
 </html>
