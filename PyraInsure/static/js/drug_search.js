@@ -1,8 +1,6 @@
 (function () {
-  const roots = document.querySelectorAll(".drug-search-root");
-  if (!roots.length) {
-    return;
-  }
+  'use strict';
+  console.log('drug_search.js IIFE executing');
 
   function debounce(fn, delay) {
     let timer = null;
@@ -14,7 +12,7 @@
     };
   }
 
-  roots.forEach((root) => {
+  function initDrugSearch(root) {
     const searchUrl = root.getAttribute("data-search-url");
     const input = root.querySelector("input[name='drug_search']");
     const resultsBox = root.querySelector("[data-search-results]");
@@ -24,6 +22,15 @@
     const sourceField = root.querySelector("input[name='source']");
 
     if (!searchUrl || !input || !resultsBox || !idField || !nameField || !normalizedField || !sourceField) {
+      console.warn('initDrugSearch: Missing required elements', {
+        searchUrl,
+        input,
+        resultsBox,
+        idField,
+        nameField,
+        normalizedField,
+        sourceField
+      });
       return;
     }
 
@@ -53,6 +60,7 @@
 
     const doSearch = debounce(async () => {
       const query = input.value.trim();
+      console.log('doSearch triggered with query:', query);
       if (query.length < 2) {
         resultsBox.hidden = true;
         return;
@@ -79,5 +87,13 @@
     }, 250);
 
     input.addEventListener("input", doSearch);
+    console.log('initDrugSearch completed, event listener attached to input');
+  }
+
+  window.initDrugSearch = initDrugSearch;
+  console.log('window.initDrugSearch defined:', typeof window.initDrugSearch);
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll(".drug-search-root").forEach(initDrugSearch);
   });
 })();

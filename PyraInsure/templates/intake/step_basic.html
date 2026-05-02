@@ -1,17 +1,18 @@
 {% extends "intake/wizard_base.html" %}
 
-{% block step_body %}
-  <p style="margin-bottom: 24px; color: var(--ink-2);">Email and phone are optional but recommended for follow-up.</p>
+{% block chat_messages %}
+  <div class="bubble coach">Let's start with some basics about you. Email and phone are optional but recommended for follow-up.</div>
+{% endblock %}
 
-  <form method="post">
-    {% csrf_token %}
+{% block chat_footer %}
+  <div class="card card-pad" style="margin-bottom:12px;">
     {% if form.non_field_errors %}
-      <div class="card tint-orange card-pad-sm" style="margin-bottom: 16px;">
+      <div class="card tint-orange card-pad-sm" style="margin-bottom:12px;">
         <small style="color: var(--bad);">{{ form.non_field_errors }}</small>
       </div>
     {% endif %}
     {% for field in form %}
-      <label class="field" {% if field.field.widget.input_type == 'radio' %}style="display: block;"{% endif %}>
+      <label class="field" style="margin-bottom:12px;">
         {{ field.label }}
         {{ field }}
         {% if field.help_text %}
@@ -22,11 +23,5 @@
         {% endif %}
       </label>
     {% endfor %}
-    <div class="row between" style="padding-top: 24px;">
-      <div></div>
-      <div class="row gap-2">
-        <button type="submit" name="nav" value="next" class="btn brand">Next</button>
-      </div>
-    </div>
-  </form>
+  </div>
 {% endblock %}

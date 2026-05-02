@@ -1,32 +1,29 @@
 {% extends "intake/wizard_base.html" %}
 
-{% block step_body %}
-  <form method="post">
-    {% csrf_token %}
-    {% if form.non_field_errors %}
-      <div class="card tint-orange card-pad-sm" style="margin-bottom: 16px;">
-        <small style="color: var(--bad);">{{ form.non_field_errors }}</small>
-      </div>
+{% block chat_messages %}
+  {% if form.non_field_errors %}
+    <div class="bubble coach" style="color: var(--bad);">{{ form.non_field_errors.0 }}</div>
+  {% endif %}
+
+  {% for field in form %}
+    {% if forloop.first %}
+      <div class="bubble coach">{{ step_label }}</div>
     {% endif %}
-    {% for field in form %}
-      <label class="field" {% if field.field.widget.input_type == 'radio' %}style="display: block;"{% endif %}>
-        {{ field.label }}
-        {{ field }}
-        {% if field.help_text %}
-          <small class="muted" style="display: block; margin-top: 4px;">{{ field.help_text }}</small>
-        {% endif %}
-        {% if field.errors %}
-          <small style="color: var(--bad); display: block; margin-top: 4px;">{{ field.errors.0 }}</small>
-        {% endif %}
-      </label>
-    {% endfor %}
-    <div class="row between" style="padding-top: 24px;">
-      {% if previous_step %}
-        <button type="submit" name="nav" value="previous" class="btn ghost">← Previous</button>
-      {% else %}
-        <div></div>
-      {% endif %}
-      <button type="submit" name="nav" value="next" class="btn brand">Next</button>
+    <div class="bubble coach">{{ field.label }}</div>
+    <div class="choice-btn-group">
+      {% for choice in field %}
+        <label>{{ choice.tag }}<span>{{ choice.choice_label }}</span></label>
+      {% endfor %}
     </div>
-  </form>
+    {% if field.help_text %}
+      <div class="muted" style="font-size:12px; margin-top:4px;">{{ field.help_text }}</div>
+    {% endif %}
+    {% if field.errors %}
+      <div style="color: var(--bad); font-size:12px; margin-top:4px;">{{ field.errors.0 }}</div>
+    {% endif %}
+  {% endfor %}
+{% endblock %}
+
+{% block chat_footer %}
+  {# Form submission buttons rendered by wizard_base #}
 {% endblock %}

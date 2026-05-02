@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import secrets
 from datetime import date
 
@@ -12,8 +13,11 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.customers.models import CustomerRecord
+from apps.customers.services import record_admin_event, record_intake_event
+from apps.customers.services import build_submission_analysis_payload
 from apps.gap_scoring.models import GapFinding
-from apps.gap_scoring.services import build_coveragap_score, score_and_persist
+from apps.gap_scoring.services import build_coveragap_score
+from apps.intake.conversation import build_turns, find_current_turn
 from apps.intake.forms import (
     BasicInfoForm,
     ConsentForm,
@@ -25,6 +29,21 @@ from apps.intake.forms import (
 )
 from apps.intake.models import HouseholdMember, IntakeAnswer, IntakeSubmission, PrescriptionMedication
 from apps.intake.questions import QUESTION_BANK, STEP_LABELS, get_step_questions, get_visible_steps
+from apps.intake.services import analyze_intake_session
+from apps.intake.services.intake_normalization import (
+    detect_possible_full_name,
+    normalize_date,
+    normalize_email,
+    normalize_income,
+    normalize_liability_limit,
+    normalize_name,
+    normalize_phone,
+    normalize_state,
+    normalize_yes_no,
+    normalize_zip,
+    split_full_name,
+)
+from apps.intake.services.address_lookup import get_address_provider, normalize_address_input
 from apps.questionnaires.models import QuestionnaireLink
 from apps.referrals.models import ReferralOpportunity
 
@@ -36,6 +55,42 @@ HOUSEHOLD_HELPERS = [
 ]
 
 RXTERMS_SEARCH_URL = "https://clinicaltables.nlm.nih.gov/api/rxterms/v3/search"
+
+TURN_TO_QUESTION_KEY: dict[str, str] = {
+    "first_name": "first_name",
+    "last_name": "last_name",
+    "dob": "primary_date_of_birth",
+    "street_address": "street_address",
+    "zip_code": "zip_code",
+    "state": "state",
+    "preferred_contact_method": "preferred_contact_method",
+    "phone": "phone",
+    "email": "email",
+    "main_concern": "main_concern",
+    "health_coverage": "current_health_coverage",
+    "health_doctors": "has_preferred_doctors",
+    "health_marketplace": "want_marketplace_help",
+    "health_medicare": "want_medicare_help",
+    "health_income": "estimated_household_income",
+    "life_dependents": "anyone_depends_on_income_or_care",
+    "life_has_insurance": "has_life_insurance",
+    "life_mortgage": "has_mortgage_or_major_debt",
+    "life_income_replace": "income_would_be_hard_to_replace",
+    "auto_owns_vehicle": "owns_or_drives_vehicle",
+    "auto_has_insurance": "has_auto_insurance",
+    "auto_liability": "auto_liability_limit",
+    "auto_teen_driver": "teen_driver_in_household",
+    "home_owns": "owns_home",
+    "home_has_insurance": "has_home_insurance",
+    "home_rental": "owns_rental_property",
+    "umbrella_has": "has_umbrella",
+    "umbrella_assets": "assets_over_250k",
+    "umbrella_risk": "has_extra_liability_risk",
+    "wants_life_referral": "wants_life_referral",
+    "wants_auto_referral": "wants_auto_referral",
+    "wants_home_referral": "wants_home_referral",
+    "wants_umbrella_referral": "wants_umbrella_referral",
+}
 
 
 def _wizard_session_key(token: str) -> str:
@@ -112,11 +167,170 @@ def _bool_from_session(value: object, default: bool = False) -> bool:
     return str(value).strip().lower() in {"1", "true", "t", "yes", "y", "on"}
 
 
+def _normalized_answer_payload(
+    *,
+    raw_value: object,
+    normalized_value: object,
+    display_value: object | None = None,
+    validation_status: str = "validated",
+    confidence: float | None = None,
+    metadata: dict | None = None,
+) -> dict:
+    return {
+        "raw_value": _stringify_answer(raw_value),
+        "normalized_value": normalized_value,
+        "display_value": _stringify_answer(display_value if display_value is not None else normalized_value),
+        "validation_status": validation_status,
+        "confidence": confidence,
+        "metadata": metadata or {},
+    }
+
+
+def _store_normalized_answer(
+    data: dict,
+    *,
+    question_key: str,
+    raw_value: object,
+    normalized_value: object,
+    display_value: object | None = None,
+    validation_status: str = "validated",
+    confidence: float | None = None,
+    metadata: dict | None = None,
+) -> None:
+    raw_answers = data.setdefault("_raw_answers", {})
+    normalized_answers = data.setdefault("_normalized_answers", {})
+    raw_answers[question_key] = _stringify_answer(raw_value)
+    normalized_answers[question_key] = _normalized_answer_payload(
+        raw_value=raw_value,
+        normalized_value=normalized_value,
+        display_value=display_value,
+        validation_status=validation_status,
+        confidence=confidence,
+        metadata=metadata,
+    )
+
+
+def _evaluate_turn_messages(turn, data: dict) -> list[str]:
+    messages: list[str] = []
+    for msg in turn.avery_messages:
+        if callable(msg):
+            messages.append(str(msg(data)))
+        else:
+            messages.append(str(msg))
+    return messages
+
+
+def _append_chat_exchange(data: dict, *, avery_messages: list[str], user_display: str | None) -> None:
+    history = data.setdefault("chat_history", [])
+    for message in avery_messages:
+        history.append({"role": "avery", "text": message})
+    if user_display:
+        history.append({"role": "user", "text": user_display})
+
+
+def _run_address_lookup(*, street_address: str, zip_code: str, state: str) -> dict:
+    provider = get_address_provider()
+    normalized_street = normalize_address_input(street_address)
+    result = provider.lookup_address(normalized_street, zip_code=zip_code or None, state=state or None)
+    status = str(result.get("status") or "no_match")
+    suggestions = result.get("suggestions") or []
+    if not isinstance(suggestions, list):
+        suggestions = []
+    return {
+        "status": status,
+        "suggestions": suggestions,
+        "normalized_street": normalized_street,
+    }
+
+
+def _first_name_confirmation_turn(full_name: str) -> dict:
+    first_name, _ = split_full_name(full_name)
+    return {
+        "id": "first_name_confirm",
+        "avery_messages": [
+            f"Just to confirm — is '{full_name}' your full name, or is your first name {first_name}?"
+        ],
+        "input": {
+            "type": "chips",
+            "chips": [
+                {"label": "That's my full name", "value": "__full_name__"},
+                {"label": f"Just {first_name}", "value": "__just_first__"},
+                {"label": "Re-enter", "value": "__reenter__"},
+            ],
+            "placeholder": "",
+            "card_type": "",
+        },
+    }
+
+
+def _address_confirmation_turn(suggestions: list[dict], *, status: str) -> dict:
+    if status == "multiple_matches":
+        prompt = "I found a few close matches. Which one looks right?"
+    else:
+        top = suggestions[0] if suggestions else {}
+        prompt = f"Did you mean {top.get('street', top.get('formatted', 'this address'))}?"
+
+    chips = []
+    for index, suggestion in enumerate(suggestions[:3]):
+        chips.append({
+            "label": suggestion.get("formatted") or suggestion.get("street") or f"Option {index + 1}",
+            "value": f"__address_select_{index}__",
+        })
+    chips.append({"label": "No, I'll re-enter it", "value": "__address_reenter__"})
+
+    return {
+        "id": "address_confirm",
+        "avery_messages": [prompt],
+        "input": {
+            "type": "address_suggestions",
+            "chips": chips,
+            "placeholder": "",
+            "card_type": "",
+        },
+    }
+
+
+def _pending_clarification_turn(data: dict) -> dict | None:
+    address_pending = data.get("_pending_address_lookup") or {}
+    suggestions = address_pending.get("suggestions") if isinstance(address_pending, dict) else None
+    if suggestions:
+        status = str(address_pending.get("status") or "needs_confirmation")
+        return _address_confirmation_turn(list(suggestions), status=status)
+
+    pending_full_name = str(data.get("_pending_full_name") or "").strip()
+    if pending_full_name:
+        return _first_name_confirmation_turn(pending_full_name)
+    return None
+
+
 def _get_active_link(token: str) -> QuestionnaireLink:
     link = get_object_or_404(QuestionnaireLink, token=token)
     if not link.can_use():
         raise Http404("This intake link is no longer active.")
     return link
+
+
+def _track_intake_link_open(link: QuestionnaireLink) -> None:
+    newly_started = False
+    link.open_count = (link.open_count or 0) + 1
+    link.last_opened_at = timezone.now()
+    update_fields = ["open_count", "last_opened_at"]
+    if link.status in {"created", "sent"}:
+        link.status = "started"
+        if link.started_at is None:
+            link.started_at = timezone.now()
+            newly_started = True
+            update_fields.append("started_at")
+        update_fields.append("status")
+    link.save(update_fields=update_fields)
+    if link.customer_id and newly_started:
+        record_intake_event(
+            customer_id=link.customer_id,
+            activity_type="intake_started",
+            title="Avery intake started",
+            metadata={"link_id": link.id, "open_count": link.open_count},
+            intake_session_id=None,
+        )
 
 
 def _get_visible_steps_for_data(link: QuestionnaireLink, data: dict) -> list[str]:
@@ -350,18 +564,23 @@ def _set_prescriptions_for_member(data: dict, temp_id: str, medications: list[di
 
 def intake_entry(request: HttpRequest, token: str) -> HttpResponse:
     link = _get_active_link(token)
+    _track_intake_link_open(link)
     data = _get_wizard_data(request, token)
     _sync_primary_household_member(data)
+
+    if request.method == "POST":
+        data["_consent_given"] = True
+        data.setdefault("consent", {}).update({
+            "terms": request.POST.get("consent_terms") == "1",
+            "privacy": request.POST.get("consent_terms") == "1",
+            "contact": request.POST.get("consent_contact") == "1",
+            "referral_sharing": request.POST.get("consent_referral_sharing") == "1",
+        })
+        _save_wizard_data(request, token, data)
+        return redirect("intake_messenger", token=token)
+
     _save_wizard_data(request, token, data)
-    first_step = _get_visible_steps_for_data(link, data)[0]
-    return render(
-        request,
-        "intake/welcome.html",
-        {
-            "link": link,
-            "start_url": reverse("intake_step", args=[token, first_step]),
-        },
-    )
+    return render(request, "intake/welcome.html", {"link": link})
 
 
 def intake_step(request: HttpRequest, token: str, step: str) -> HttpResponse:
@@ -646,12 +865,17 @@ def intake_submit(request: HttpRequest, token: str) -> HttpResponse:
     customer.phone = phone
     customer.state = str(basic_info.get("state", "")).strip().upper()[:2]
     customer.preferred_contact_method = str(basic_info.get("preferred_contact_method", "")).strip()
+    if customer.client_since is None:
+        customer.client_since = timezone.localdate()
+    customer.last_submission_at = timezone.now()
     customer.save()
 
     submission = IntakeSubmission.objects.create(
         questionnaire_link=link,
         agent=link.agent,
         customer=customer,
+        public_token=link.token,
+        source="questionnaire_link",
         consent_terms=bool(consents.get("consent_terms")),
         consent_privacy=bool(consents.get("consent_privacy")),
         consent_contact=bool(consents.get("consent_contact")),
@@ -666,17 +890,22 @@ def intake_submit(request: HttpRequest, token: str) -> HttpResponse:
             continue
         persisted_member = HouseholdMember.objects.create(
             submission=submission,
+            customer=customer,
             role=member.get("role", "dependent"),
+            name=f"{member.get('first_name', '')} {member.get('last_name', '')}".strip(),
             first_name=member.get("first_name", ""),
             last_name=member.get("last_name", ""),
             date_of_birth=member["date_of_birth"],
+            dob=member["date_of_birth"],
             needs_coverage=bool(member.get("needs_coverage")),
+            needs_health_coverage=bool(member.get("needs_coverage")),
             other_coverage_access=bool(member.get("other_coverage_access")),
             legal_parent_guardian_under_19=bool(member.get("legal_parent_guardian_under_19")),
             claimed_tax_dependent=bool(member.get("claimed_tax_dependent")),
             pregnant=bool(member.get("pregnant")),
             tobacco_user=bool(member.get("tobacco_user")),
             takes_prescriptions=bool(member.get("takes_prescriptions")),
+            has_prescriptions=bool(member.get("takes_prescriptions")),
         )
         persisted_members[member["temp_id"]] = persisted_member
 
@@ -697,29 +926,44 @@ def intake_submit(request: HttpRequest, token: str) -> HttpResponse:
             )
 
     answer_map = _build_answer_map(data, household_members)
+    raw_answer_map = data.get("_raw_answers", {})
+    normalized_answer_map = data.get("_normalized_answers", {})
     for step_name in _get_visible_steps_for_data(link, data):
         if step_name in {"household", "household_coverage", "prescription_check", "consent"} or step_name.startswith("prescription_"):
             continue
         for question in get_step_questions(step_name, link.selected_modules()):
             value = answer_map.get(question.key, "")
+            raw_value = raw_answer_map.get(question.key, value)
             IntakeAnswer.objects.create(
                 submission=submission,
+                customer=customer,
                 module=(question.supports[0] if question.supports else ""),
                 supports=",".join(question.supports),
                 question_key=question.key,
                 question_text=question.text,
-                answer_value=_stringify_answer(value),
+                answer_value=_stringify_answer(raw_value),
+                normalized_value=normalized_answer_map.get(question.key),
             )
 
     submission.status = "submitted"
     submission.submitted_at = timezone.now()
     submission.save(update_fields=["status", "submitted_at", "updated_at"])
 
-    link.completed_at = timezone.now()
-    link.is_active = False
-    link.save(update_fields=["completed_at", "is_active"])
+    record_intake_event(
+        customer_id=customer.id,
+        intake_session_id=submission.id,
+        activity_type="intake_submitted",
+        title="Intake submitted",
+        metadata={"link_id": link.id},
+    )
 
-    score_and_persist(submission, answer_map)
+    link.completed_at = timezone.now()
+    link.status = "submitted"
+    link.customer = customer
+    link.is_active = False
+    link.save(update_fields=["completed_at", "is_active", "status", "customer"])
+
+    analyze_intake_session(submission.id)
     _clear_wizard_data(request, token)
     return redirect("intake_thank_you", score_token=submission.score_access_token)
 
@@ -818,6 +1062,15 @@ def pre_call_summary(request: HttpRequest, submission_id: int) -> HttpResponse:
         IntakeSubmission.objects.select_related("customer", "agent", "questionnaire_link"),
         id=submission_id,
     )
+    if request.user.is_authenticated and submission.customer_id:
+        record_admin_event(
+            customer_id=submission.customer_id,
+            intake_session_id=submission.id,
+            activity_type="pre_call_summary_opened",
+            title="Pre-call summary opened",
+            actor_name=request.user.get_username(),
+            dedupe_window_seconds=120,
+        )
 
     findings = list(GapFinding.objects.filter(submission=submission).order_by("-points", "-created_at"))
     referrals = list(ReferralOpportunity.objects.filter(submission=submission).order_by("-updated_at"))
@@ -879,3 +1132,947 @@ def pre_call_summary(request: HttpRequest, submission_id: int) -> HttpResponse:
         "active_nav": "",
     }
     return render(request, "summaries/pre_call_summary.html", context)
+
+
+@login_required
+def analyze_intake_session_admin(request: HttpRequest, submission_id: int) -> JsonResponse:
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "Method not allowed."}, status=405)
+
+    submission = get_object_or_404(
+        IntakeSubmission.objects.select_related("agent__user", "customer"),
+        id=submission_id,
+        agent__user=request.user,
+    )
+
+    analysis_result = analyze_intake_session(submission.id)
+    return JsonResponse(
+        {
+            "ok": True,
+            "submission_id": submission.id,
+            "finding_count": len(analysis_result.findings),
+            "talking_point_count": len(analysis_result.talking_points),
+            "referral_count": len(analysis_result.referrals),
+            "raw_gap_score": analysis_result.raw_gap_score,
+            "capped_gap_score": analysis_result.capped_gap_score,
+        }
+    )
+
+
+@login_required
+def submission_analysis(request: HttpRequest, submission_id: int) -> JsonResponse:
+    submission = get_object_or_404(
+        IntakeSubmission.objects.select_related("agent__user", "customer", "questionnaire_link"),
+        id=submission_id,
+        agent__user=request.user,
+    )
+    payload = build_submission_analysis_payload(submission)
+    return JsonResponse(payload)
+
+
+@login_required
+def admin_submission_review(request: HttpRequest, submission_id: int) -> JsonResponse:
+    if request.method != "PATCH":
+        return JsonResponse({"ok": False, "error": "Method not allowed."}, status=405)
+
+    submission = get_object_or_404(
+        IntakeSubmission.objects.select_related("customer", "agent__user"),
+        id=submission_id,
+    )
+    if not request.user.is_staff and submission.agent.user_id != request.user.id:
+        return JsonResponse({"ok": False, "error": "Forbidden."}, status=403)
+
+    body = json.loads(request.body or "{}")
+    review_status = str(body.get("review_status") or "unreviewed")
+    if review_status not in {"unreviewed", "reviewed", "needs_follow_up"}:
+        return JsonResponse({"ok": False, "error": "Invalid review_status."}, status=400)
+
+    submission.review_status = review_status
+    submission.review_notes = str(body.get("review_notes") or "")
+    submission.reviewed_at = timezone.now()
+    submission.reviewed_by = request.user
+    submission.save(update_fields=["review_status", "review_notes", "reviewed_at", "reviewed_by", "updated_at"])
+
+    if submission.customer_id:
+        if review_status == "needs_follow_up":
+            submission.customer.status = "prospect"
+            submission.customer.save(update_fields=["status", "updated_at"])
+        record_admin_event(
+            customer_id=submission.customer_id,
+            intake_session_id=submission.id,
+            activity_type="manual_review_completed",
+            title="Manual review completed",
+            actor_name=request.user.get_username(),
+            description=submission.review_notes or None,
+            metadata={"review_status": review_status},
+        )
+
+    return JsonResponse({"ok": True, "submission_id": submission.id, "review_status": submission.review_status})
+
+
+# ── Messenger-style intake ────────────────────────────────────────
+
+def intake_messenger(request: HttpRequest, token: str) -> HttpResponse:
+    """Serve the messenger-style intake shell."""
+    link = _get_active_link(token)
+    data = _get_wizard_data(request, token)
+    modules = link.selected_modules()
+
+    # Build turns and find current
+    turns = build_turns(data, modules)
+    completed = set(data.get("_completed_turns", []))
+    pending_turn = _pending_clarification_turn(data)
+    current_turn = pending_turn or find_current_turn(turns, completed)
+
+    if current_turn is None:
+        # All turns completed - redirect to submit
+        return redirect("intake_submit", token=token)
+
+    # Get history
+    history = data.get("chat_history", [])
+
+    # Serialize current turn for initial render
+    current_turn_data = current_turn if pending_turn else _serialize_turn(current_turn, data, link)
+    progress_data = {"index": len(completed), "total": len(turns)}
+
+    return render(request, "intake/messenger.html", {
+        "link": link,
+        "history_json": json.dumps(history),
+        "current_turn": current_turn_data,
+        "progress": progress_data,
+    })
+
+
+def intake_messenger_api(request: HttpRequest, token: str) -> JsonResponse:
+    """JSON API for messenger conversation flow."""
+    link = _get_active_link(token)
+    data = _get_wizard_data(request, token)
+    modules = link.selected_modules()
+
+    turns = build_turns(data, modules)
+    completed = set(data.get("_completed_turns", []))
+
+    if request.method == "GET":
+        # Return current state for page load
+        pending_turn = _pending_clarification_turn(data)
+        current_turn = pending_turn or find_current_turn(turns, completed)
+        if current_turn is None:
+            return JsonResponse({
+                "history": data.get("chat_history", []),
+                "current": None,
+                "progress": {"index": len(turns), "total": len(turns)},
+                "done": True,
+                "redirect_url": reverse("intake_submit", args=[token]),
+            })
+
+        return JsonResponse({
+            "history": data.get("chat_history", []),
+            "current": current_turn if pending_turn else _serialize_turn(current_turn, data, link),
+            "progress": {"index": len(completed), "total": len(turns)},
+            "done": False,
+        })
+
+    # POST: process answer
+    body_data = json.loads(request.body)
+    turn_id = body_data.get("turn_id", "")
+    answer = body_data.get("answer", "").strip()
+    action = body_data.get("action", "")
+
+    # Handle household member add/remove (special case)
+    if action == "household_add":
+        role = body_data.get("role", "")
+        first_name = body_data.get("first_name", "").strip()
+        last_name = body_data.get("last_name", "").strip()
+        dob = body_data.get("date_of_birth", "").strip()
+        return _handle_household_member_add(request, token, data, link, role, first_name, last_name, dob)
+
+    if action == "household_remove":
+        role = body_data.get("role", "")
+        temp_id = body_data.get("temp_id", "")
+        return _handle_household_member_remove(request, token, data, link, role, temp_id)
+
+    # Handle prescription add/remove (special case)
+    if action == "prescription_add":
+        return _handle_prescription_add(request, token, data, link, body_data)
+
+    if action == "prescription_remove":
+        return _handle_prescription_remove(request, token, data, link, body_data)
+
+    if turn_id == "address_confirm":
+        pending = data.get("_pending_address_lookup") or {}
+        suggestions = list(pending.get("suggestions") or [])
+        if answer == "__address_reenter__":
+            _append_chat_exchange(
+                data,
+                avery_messages=_address_confirmation_turn(suggestions, status=str(pending.get("status") or "needs_confirmation"))["avery_messages"],
+                user_display="No, I'll re-enter it",
+            )
+            data.pop("_pending_address_lookup", None)
+            _save_wizard_data(request, token, data)
+            return JsonResponse({
+                "ok": True,
+                "done": False,
+                "user_display": "No, I'll re-enter it",
+                "next": {
+                    "id": "street_address",
+                    "avery_messages": ["I couldn't verify that address. Can you enter the full street address and ZIP?"],
+                    "input": {"type": "text", "chips": [], "placeholder": "Street address", "card_type": ""},
+                },
+                "progress": {"index": len(completed), "total": len(turns)},
+            })
+
+        selected_index = None
+        if answer.startswith("__address_select_") and answer.endswith("__"):
+            try:
+                selected_index = int(answer.replace("__address_select_", "").replace("__", ""))
+            except ValueError:
+                selected_index = None
+        if selected_index is None or selected_index < 0 or selected_index >= len(suggestions):
+            return JsonResponse({"ok": False, "error": "Please pick one of the address options."})
+
+        selected = suggestions[selected_index]
+        basic_info = data.setdefault("basic_info", {})
+        basic_info["street_address"] = selected.get("street") or ""
+        basic_info["zip_code"] = selected.get("zip_code") or ""
+        basic_info["state"] = selected.get("state") or basic_info.get("state", "")
+        basic_info["city"] = selected.get("city") or ""
+        basic_info["formatted_address"] = selected.get("formatted") or ""
+
+        _store_normalized_answer(
+            data,
+            question_key="street_address",
+            raw_value=pending.get("raw_street") or selected.get("street") or "",
+            normalized_value=selected.get("street") or "",
+            display_value=selected.get("formatted") or selected.get("street") or "",
+            confidence=float(selected.get("confidence") or 0),
+            metadata={"provider": selected.get("source"), "city": selected.get("city"), "state": selected.get("state"), "zip_code": selected.get("zip_code")},
+        )
+        _store_normalized_answer(
+            data,
+            question_key="zip_code",
+            raw_value=pending.get("raw_zip") or selected.get("zip_code") or "",
+            normalized_value=selected.get("zip_code") or "",
+            display_value=selected.get("zip_code") or "",
+            confidence=float(selected.get("confidence") or 0),
+            metadata={"provider": selected.get("source")},
+        )
+        _store_normalized_answer(
+            data,
+            question_key="state",
+            raw_value=basic_info.get("state") or "",
+            normalized_value=selected.get("state") or "",
+            display_value=selected.get("state") or "",
+            confidence=float(selected.get("confidence") or 0),
+            metadata={"provider": selected.get("source")},
+        )
+
+        _append_chat_exchange(
+            data,
+            avery_messages=_address_confirmation_turn(suggestions, status=str(pending.get("status") or "needs_confirmation"))["avery_messages"],
+            user_display=selected.get("formatted") or selected.get("street") or "Address confirmed",
+        )
+        data.pop("_pending_address_lookup", None)
+        completed.add("street_address")
+        completed.add("zip_code")
+        completed.add("state")
+        data["_completed_turns"] = list(completed)
+        _save_wizard_data(request, token, data)
+
+        turns = build_turns(data, modules)
+        completed = set(data.get("_completed_turns", []))
+        next_turn = find_current_turn(turns, completed)
+        if next_turn is None:
+            return JsonResponse({
+                "ok": True,
+                "done": True,
+                "user_display": selected.get("formatted") or selected.get("street") or "Address confirmed",
+                "redirect_url": reverse("intake_submit", args=[token]),
+            })
+        return JsonResponse({
+            "ok": True,
+            "done": False,
+            "user_display": selected.get("formatted") or selected.get("street") or "Address confirmed",
+            "next": _serialize_turn(next_turn, data, link),
+            "progress": {"index": len(completed), "total": len(turns)},
+        })
+
+    if turn_id == "first_name_confirm":
+        pending_full_name = normalize_name(str(data.get("_pending_full_name") or ""))
+        if not pending_full_name:
+            return JsonResponse({"ok": False, "error": "Please enter your first name again."})
+
+        confirmation_turn = _first_name_confirmation_turn(pending_full_name)
+        if answer == "__reenter__":
+            _append_chat_exchange(
+                data,
+                avery_messages=confirmation_turn["avery_messages"],
+                user_display="Re-enter",
+            )
+            data.pop("_pending_full_name", None)
+            _save_wizard_data(request, token, data)
+            return JsonResponse({
+                "ok": True,
+                "done": False,
+                "user_display": "Re-enter",
+                "next": {
+                    "id": "first_name",
+                    "avery_messages": ["No problem — what should I use as your first name?"],
+                    "input": {"type": "text", "chips": [], "placeholder": "Your first name", "card_type": ""},
+                },
+                "progress": {"index": len(completed), "total": len(turns)},
+            })
+
+        first_name, last_name = split_full_name(pending_full_name)
+        basic_info = data.setdefault("basic_info", {})
+
+        if answer == "__full_name__":
+            basic_info["first_name"] = first_name
+            basic_info["last_name"] = last_name
+            _store_normalized_answer(data, question_key="first_name", raw_value=pending_full_name, normalized_value=first_name)
+            _store_normalized_answer(data, question_key="last_name", raw_value=pending_full_name, normalized_value=last_name)
+            completed.add("first_name")
+            completed.add("last_name")
+            user_display = "That's my full name"
+        elif answer == "__just_first__":
+            basic_info["first_name"] = first_name
+            _store_normalized_answer(data, question_key="first_name", raw_value=pending_full_name, normalized_value=first_name)
+            completed.add("first_name")
+            user_display = f"Just {first_name}"
+        else:
+            return JsonResponse({"ok": False, "error": "Please choose one of the options."})
+
+        _sync_primary_household_member(data)
+        _append_chat_exchange(
+            data,
+            avery_messages=confirmation_turn["avery_messages"],
+            user_display=user_display,
+        )
+        data.pop("_pending_full_name", None)
+        data["_completed_turns"] = list(completed)
+        _save_wizard_data(request, token, data)
+
+        turns = build_turns(data, modules)
+        completed = set(data.get("_completed_turns", []))
+        next_turn = find_current_turn(turns, completed)
+        if next_turn is None:
+            return JsonResponse({
+                "ok": True,
+                "done": True,
+                "user_display": user_display,
+                "redirect_url": reverse("intake_submit", args=[token]),
+            })
+
+        return JsonResponse({
+            "ok": True,
+            "done": False,
+            "user_display": user_display,
+            "next": _serialize_turn(next_turn, data, link),
+            "progress": {"index": len(completed), "total": len(turns)},
+        })
+
+    # Find the turn
+    turn = next((t for t in turns if t.id == turn_id), None)
+    if not turn:
+        return JsonResponse({"ok": False, "error": "Unknown question."}, status=400)
+
+    # Validate required
+    if turn.required and not answer:
+        return JsonResponse({
+            "ok": False,
+            "error": "This one's required — what's your answer?",
+            "next": _serialize_turn(turn, data, link),
+        })
+
+    save_answer = answer
+    user_display_override: str | None = None
+    question_key = TURN_TO_QUESTION_KEY.get(turn_id)
+
+    chip_values: set[str] = set()
+    for chip in turn.chips or []:
+        if isinstance(chip, dict):
+            chip_values.add(str(chip.get("value") or "").strip().lower())
+        else:
+            chip_values.add(str(chip or "").strip().lower())
+    is_yes_no_turn = bool(chip_values) and chip_values.issubset({"yes", "no"})
+    if is_yes_no_turn and answer:
+        normalized_bool = normalize_yes_no(answer)
+        if not normalized_bool.ok:
+            return JsonResponse({"ok": False, "error": normalized_bool.error, "next": _serialize_turn(turn, data, link)})
+        save_answer = normalized_bool.normalized or answer
+        user_display_override = normalized_bool.display or save_answer
+
+    if turn_id == "first_name" and answer:
+        normalized_first_name = normalize_name(answer)
+        if detect_possible_full_name(normalized_first_name):
+            _append_chat_exchange(
+                data,
+                avery_messages=_evaluate_turn_messages(turn, data),
+                user_display=normalized_first_name,
+            )
+            data["_pending_full_name"] = normalized_first_name
+            _save_wizard_data(request, token, data)
+            return JsonResponse({
+                "ok": True,
+                "done": False,
+                "user_display": normalized_first_name,
+                "next": _first_name_confirmation_turn(normalized_first_name),
+                "progress": {"index": len(completed), "total": len(turns)},
+            })
+        save_answer = normalized_first_name
+        user_display_override = normalized_first_name
+        _store_normalized_answer(
+            data,
+            question_key="first_name",
+            raw_value=answer,
+            normalized_value=normalized_first_name,
+        )
+
+    if turn_id == "last_name" and answer:
+        normalized_last_name = normalize_name(answer)
+        save_answer = normalized_last_name
+        user_display_override = normalized_last_name
+        _store_normalized_answer(
+            data,
+            question_key="last_name",
+            raw_value=answer,
+            normalized_value=normalized_last_name,
+        )
+
+    if turn_id == "dob" and answer:
+        normalized_dob = normalize_date(answer)
+        if not normalized_dob.ok:
+            return JsonResponse({"ok": False, "error": normalized_dob.error, "next": _serialize_turn(turn, data, link)})
+        save_answer = normalized_dob.normalized or answer
+        user_display_override = normalized_dob.display or save_answer
+        _store_normalized_answer(
+            data,
+            question_key="primary_date_of_birth",
+            raw_value=answer,
+            normalized_value=save_answer,
+            display_value=normalized_dob.display or save_answer,
+        )
+
+    if turn_id == "phone" and answer and answer != "__skip__":
+        normalized_phone = normalize_phone(answer)
+        if not normalized_phone.ok:
+            return JsonResponse({"ok": False, "error": normalized_phone.error, "next": _serialize_turn(turn, data, link)})
+        save_answer = normalized_phone.normalized or answer
+        user_display_override = normalized_phone.display or save_answer
+        _store_normalized_answer(
+            data,
+            question_key="phone",
+            raw_value=answer,
+            normalized_value=save_answer,
+            display_value=normalized_phone.display or save_answer,
+        )
+
+    if turn_id == "email" and answer and answer != "__skip__":
+        normalized_email = normalize_email(answer)
+        if not normalized_email.ok:
+            return JsonResponse({"ok": False, "error": normalized_email.error, "next": _serialize_turn(turn, data, link)})
+        save_answer = normalized_email.normalized or ""
+        user_display_override = normalized_email.display or ""
+        _store_normalized_answer(
+            data,
+            question_key="email",
+            raw_value=answer,
+            normalized_value=save_answer,
+            display_value=user_display_override,
+        )
+
+    if turn_id == "state" and answer and answer != "__skip__":
+        normalized_state = normalize_state(answer)
+        if not normalized_state.ok:
+            return JsonResponse({"ok": False, "error": normalized_state.error, "next": _serialize_turn(turn, data, link)})
+        save_answer = normalized_state.normalized or answer
+        user_display_override = normalized_state.display or save_answer
+        _store_normalized_answer(
+            data,
+            question_key="state",
+            raw_value=answer,
+            normalized_value=save_answer,
+            display_value=user_display_override,
+        )
+
+    if turn_id == "zip_code" and answer and answer != "__skip__":
+        normalized_zip = normalize_zip(answer)
+        if not normalized_zip.ok:
+            return JsonResponse({"ok": False, "error": normalized_zip.error, "next": _serialize_turn(turn, data, link)})
+        save_answer = normalized_zip.normalized or answer
+        user_display_override = normalized_zip.display or save_answer
+        _store_normalized_answer(
+            data,
+            question_key="zip_code",
+            raw_value=answer,
+            normalized_value=save_answer,
+            display_value=user_display_override,
+        )
+
+    if turn_id == "street_address" and answer and answer != "__skip__":
+        cleaned_street = normalize_address_input(answer)
+        save_answer = cleaned_street
+        user_display_override = cleaned_street
+        _store_normalized_answer(
+            data,
+            question_key="street_address",
+            raw_value=answer,
+            normalized_value=cleaned_street,
+            display_value=cleaned_street,
+            validation_status="pending_confirmation",
+        )
+
+    if turn_id == "health_income" and answer and answer != "__skip__":
+        normalized_income = normalize_income(answer)
+        if not normalized_income.ok:
+            return JsonResponse({"ok": False, "error": normalized_income.error, "next": _serialize_turn(turn, data, link)})
+        save_answer = normalized_income.normalized or answer
+        user_display_override = normalized_income.display or save_answer
+        _store_normalized_answer(
+            data,
+            question_key="estimated_household_income",
+            raw_value=answer,
+            normalized_value=save_answer,
+            display_value=user_display_override,
+        )
+
+    if turn_id == "auto_liability" and answer:
+        normalized_liability = normalize_liability_limit(answer)
+        if not normalized_liability.ok:
+            return JsonResponse({"ok": False, "error": normalized_liability.error, "next": _serialize_turn(turn, data, link)})
+        save_answer = normalized_liability.normalized or answer
+        user_display_override = normalized_liability.display or save_answer
+        _store_normalized_answer(
+            data,
+            question_key="auto_liability_limit",
+            raw_value=answer,
+            normalized_value=save_answer,
+            display_value=user_display_override,
+        )
+
+    if question_key and question_key not in {"first_name", "last_name", "primary_date_of_birth", "phone"} and answer and answer != "__skip__":
+        _store_normalized_answer(data, question_key=question_key, raw_value=answer, normalized_value=save_answer)
+
+    # Run save function
+    if turn.save and save_answer:
+        error = turn.save(save_answer, data)
+        if error:
+            return JsonResponse({"ok": False, "error": error, "next": _serialize_turn(turn, data, link)})
+
+    if turn_id == "street_address" and save_answer and save_answer != "__skip__":
+        basic_info = data.setdefault("basic_info", {})
+        pending = data.setdefault("_pending_address_lookup", {})
+        pending["raw_street"] = answer
+        pending["street"] = str(basic_info.get("street_address") or save_answer or "")
+
+    if turn_id in {"zip_code", "state", "street_address"} and save_answer != "__skip__":
+        basic_info = data.setdefault("basic_info", {})
+        street_value = str(basic_info.get("street_address") or "").strip()
+        zip_value = str(basic_info.get("zip_code") or "").strip()
+        state_value = str(basic_info.get("state") or "").strip()
+        if turn_id == "street_address" and not zip_value:
+            pass
+        elif street_value and zip_value:
+            lookup_result = _run_address_lookup(street_address=street_value, zip_code=zip_value, state=state_value)
+            status = lookup_result.get("status", "no_match")
+            suggestions = list(lookup_result.get("suggestions") or [])
+            if status == "no_match":
+                data["_pending_address_lookup"] = {
+                    "status": "no_match",
+                    "raw_street": answer if turn_id == "street_address" else street_value,
+                    "raw_zip": zip_value,
+                    "suggestions": [],
+                }
+                _save_wizard_data(request, token, data)
+                return JsonResponse({
+                    "ok": False,
+                    "error": "I couldn't verify that address. Can you enter the full street address and ZIP?",
+                    "next": {
+                        "id": "street_address",
+                        "avery_messages": ["I couldn't verify that address. Can you enter the full street address and ZIP?"],
+                        "input": {"type": "text", "chips": [], "placeholder": "Street address", "card_type": ""},
+                    },
+                })
+
+            if suggestions:
+                data["_pending_address_lookup"] = {
+                    "status": status,
+                    "raw_street": answer if turn_id == "street_address" else street_value,
+                    "raw_zip": zip_value,
+                    "normalized_street": lookup_result.get("normalized_street") or street_value,
+                    "suggestions": suggestions,
+                }
+                _append_chat_exchange(
+                    data,
+                    avery_messages=_evaluate_turn_messages(turn, data),
+                    user_display=user_display_override or _get_user_display(turn, save_answer),
+                )
+                completed.add(turn_id)
+                data["_completed_turns"] = list(completed)
+                _save_wizard_data(request, token, data)
+                return JsonResponse({
+                    "ok": True,
+                    "done": False,
+                    "user_display": user_display_override or _get_user_display(turn, save_answer),
+                    "next": _address_confirmation_turn(suggestions, status=status),
+                    "progress": {"index": len(completed), "total": len(turns)},
+                })
+
+    # Append to chat history
+    user_display = user_display_override or _get_user_display(turn, save_answer)
+    _append_chat_exchange(
+        data,
+        avery_messages=_evaluate_turn_messages(turn, data),
+        user_display=user_display,
+    )
+
+    # Mark turn complete
+    completed.add(turn_id)
+    data.pop("_pending_full_name", None)
+    data["_completed_turns"] = list(completed)
+    _save_wizard_data(request, token, data)
+
+    # Rebuild turns (may change after save)
+    turns = build_turns(data, modules)
+    completed = set(data.get("_completed_turns", []))
+    next_turn = find_current_turn(turns, completed)
+
+    if next_turn is None:
+        # All done
+        return JsonResponse({
+            "ok": True,
+            "done": True,
+            "user_display": user_display,
+            "redirect_url": reverse("intake_submit", args=[token]),
+        })
+
+    return JsonResponse({
+        "ok": True,
+        "done": False,
+        "user_display": user_display,
+        "next": _serialize_turn(next_turn, data, link),
+        "progress": {"index": len(completed), "total": len(turns)},
+    })
+
+
+def _serialize_turn(turn, data: dict, link) -> dict:
+    """Convert a Turn to JSON-serializable dict."""
+    if turn is None:
+        return {}
+
+    # Evaluate callable messages
+    messages = []
+    for msg in turn.avery_messages:
+        if callable(msg):
+            messages.append(msg(data))
+        else:
+            messages.append(msg)
+
+    input_config = {
+        "type": turn.input_type,
+        "chips": turn.chips,
+        "placeholder": turn.placeholder,
+        "card_type": turn.card_type,
+    }
+
+    # For inline_card turns, render HTML
+    if turn.input_type == "inline_card":
+        if turn.card_type == "consent":
+            input_config["card_html"] = _render_consent_card(data, link)
+        elif turn.card_type == "household_members":
+            input_config["card_html"] = _render_household_form(data, link)
+        elif turn.card_type == "prescription":
+            temp_id = turn.id.removeprefix("prescription_")
+            input_config["card_html"] = _render_prescription_card(data, link, temp_id)
+
+    return {
+        "id": turn.id,
+        "avery_messages": messages,
+        "input": input_config,
+    }
+
+
+def _get_user_display(turn, answer: str) -> str:
+    """Convert raw answer to display text for user bubble."""
+    if answer == "__skip__" or answer == "__auto__" or answer == "__household_done__" or answer == "__prescription_done__":
+        return ""
+
+    # For chips, look up the label
+    if turn.chips and answer:
+        for chip in turn.chips:
+            if isinstance(chip, dict) and chip.get("value") == answer:
+                return chip.get("label", answer)
+            elif isinstance(chip, str) and chip == answer:
+                return chip
+
+    return answer
+
+
+def _render_consent_card(data: dict, link) -> str:
+    """Render the consent form as HTML."""
+    token = link.token
+    return f"""
+<div class="card card-pad">
+  <h4 style="font-size:13px;font-weight:600;margin-bottom:12px;">Consent</h4>
+  <form method="post" action="{reverse('intake_submit', args=[token])}" class="consent-form">
+    <input type="hidden" name="csrfmiddlewaretoken" />
+    <label style="display:flex;gap:8px;align-items:flex-start;margin-bottom:12px;">
+      <input type="checkbox" name="consent_terms" required />
+      <span style="flex:1;font-size:14px;line-height:1.4;">I agree to the terms of service</span>
+    </label>
+    <label style="display:flex;gap:8px;align-items:flex-start;margin-bottom:12px;">
+      <input type="checkbox" name="consent_privacy" required />
+      <span style="flex:1;font-size:14px;line-height:1.4;">I acknowledge the privacy policy</span>
+    </label>
+    <label style="display:flex;gap:8px;align-items:flex-start;margin-bottom:12px;">
+      <input type="checkbox" name="consent_contact" required />
+      <span style="flex:1;font-size:14px;line-height:1.4;">I consent to be contacted about my application</span>
+    </label>
+    <label style="display:flex;gap:8px;align-items:flex-start;">
+      <input type="checkbox" name="consent_referral_sharing" required />
+      <span style="flex:1;font-size:14px;line-height:1.4;">I consent to information sharing with partner agents</span>
+    </label>
+  </form>
+</div>
+"""
+
+
+def _render_household_form(data: dict, link) -> str:
+    """Render the household member management form as HTML."""
+    basic_info = data.get("basic_info", {})
+    members = data.get("household_members", [])
+    household_type = data.get("_household_type", "solo")
+    token = link.token
+
+    # Primary member info
+    primary_name = f"{basic_info.get('first_name', '')} {basic_info.get('last_name', '')}".strip()
+    primary_dob = basic_info.get("primary_date_of_birth", "")
+
+    # Filter spouse and dependents
+    spouse = next((m for m in members if m.get("role") == "spouse"), None)
+    dependents = [m for m in members if m.get("role") == "dependent"]
+
+    html = f"""
+<div class="card card-pad" id="household-form-card">
+  <h4 style="font-size:13px;font-weight:600;margin-bottom:16px;">Household Members</h4>
+
+  <!-- Primary member (always shown) -->
+  <div style="padding:12px;background:#f9f9f9;border-radius:8px;margin-bottom:16px;">
+    <div style="font-weight:500;color:#333;margin-bottom:8px;">You</div>
+    <div style="font-size:13px;color:#666;">
+      <div>{primary_name or "(name not filled)"}</div>
+      <div>{primary_dob or "(DOB not filled)"}</div>
+    </div>
+  </div>
+
+  <!-- Spouse section (if applicable) -->
+  """
+
+    if household_type in ("spouse", "spouse_and_dependents"):
+        html += f"""
+  <div style="margin-bottom:16px;">
+    <div style="font-weight:500;color:#333;margin-bottom:8px;">Spouse</div>
+    """
+        if spouse:
+            spouse_name = f"{spouse.get('first_name', '')} {spouse.get('last_name', '')}".strip()
+            spouse_dob = spouse.get("date_of_birth", "")
+            html += f"""
+    <div style="padding:12px;background:#f9f9f9;border-radius:8px;margin-bottom:8px;">
+      <div style="font-size:13px;color:#666;">
+        <div>{spouse_name}</div>
+        <div>{spouse_dob}</div>
+      </div>
+      <button type="button" class="household-remove-btn" data-role="spouse" style="font-size:11px;color:#d9534f;cursor:pointer;margin-top:8px;">Remove spouse</button>
+    </div>
+    """
+        else:
+            html += f"""
+    <form class="household-add-form" data-role="spouse" style="padding:12px;background:#f9f9f9;border-radius:8px;">
+      <input type="hidden" name="role" value="spouse" />
+      <input type="text" name="first_name" placeholder="First name" style="width:100%;padding:8px;margin-bottom:8px;border:1px solid #ddd;border-radius:4px;" required />
+      <input type="text" name="last_name" placeholder="Last name" style="width:100%;padding:8px;margin-bottom:8px;border:1px solid #ddd;border-radius:4px;" />
+      <input type="date" name="date_of_birth" placeholder="DOB" style="width:100%;padding:8px;margin-bottom:8px;border:1px solid #ddd;border-radius:4px;" required />
+      <button type="submit" class="btn brand sm" style="width:100%;">Add spouse</button>
+    </form>
+    """
+        html += "</div>"
+
+    # Dependents section (if applicable)
+    if household_type in ("dependents", "spouse_and_dependents"):
+        html += f"""
+  <div>
+    <div style="font-weight:500;color:#333;margin-bottom:8px;">Dependents</div>
+    """
+        if dependents:
+            for dep in dependents:
+                dep_name = f"{dep.get('first_name', '')} {dep.get('last_name', '')}".strip()
+                dep_dob = dep.get("date_of_birth", "")
+                dep_id = dep.get("temp_id", "")
+                html += f"""
+    <div style="padding:12px;background:#f9f9f9;border-radius:8px;margin-bottom:8px;">
+      <div style="font-size:13px;color:#666;">
+        <div>{dep_name}</div>
+        <div>{dep_dob}</div>
+      </div>
+      <button type="button" class="household-remove-btn" data-temp-id="{dep_id}" data-role="dependent" style="font-size:11px;color:#d9534f;cursor:pointer;margin-top:8px;">Remove</button>
+    </div>
+    """
+
+        html += f"""
+    <form class="household-add-form" data-role="dependent" style="padding:12px;background:#f0f0f0;border-radius:8px;border:2px dashed #ccc;margin-bottom:8px;">
+      <input type="hidden" name="role" value="dependent" />
+      <input type="text" name="first_name" placeholder="First name" style="width:100%;padding:8px;margin-bottom:8px;border:1px solid #ddd;border-radius:4px;" required />
+      <input type="text" name="last_name" placeholder="Last name" style="width:100%;padding:8px;margin-bottom:8px;border:1px solid #ddd;border-radius:4px;" />
+      <input type="date" name="date_of_birth" placeholder="DOB" style="width:100%;padding:8px;margin-bottom:8px;border:1px solid #ddd;border-radius:4px;" required />
+      <button type="submit" class="btn brand sm" style="width:100%;">Add dependent</button>
+    </form>
+    </div>
+    """
+
+    html += """
+  <button type="button" class="household-done-btn btn brand lg full" style="margin-top:16px;">Done adding members</button>
+</div>
+"""
+    return html
+
+
+def _handle_household_member_add(request: HttpRequest, token: str, data: dict, link, role: str, first_name: str, last_name: str, dob: str) -> JsonResponse:
+    """Handle adding a household member."""
+    from apps.intake.conversation import _upsert_household_member
+    from dateutil.parser import parse as parse_date
+    from dateutil.parser import ParserError
+
+    try:
+        dt = parse_date(dob, dayfirst=False)
+        dob_iso = dt.date().isoformat()
+    except (ParserError, ValueError):
+        return JsonResponse({
+            "ok": False,
+            "error": "I couldn't read that date — try MM/DD/YYYY, like 04/05/1967.",
+            "card_html": _render_household_form(data, link),
+        })
+
+    _upsert_household_member(data, role, first_name, last_name, dob_iso)
+    _save_wizard_data(request, token, data)
+
+    return JsonResponse({
+        "ok": True,
+        "card_html": _render_household_form(data, link),
+    })
+
+
+def _handle_household_member_remove(request: HttpRequest, token: str, data: dict, link, role: str, temp_id: str) -> JsonResponse:
+    """Handle removing a household member."""
+    members = data.get("household_members", [])
+    if role == "spouse":
+        data["household_members"] = [m for m in members if m.get("role") != "spouse"]
+    else:
+        data["household_members"] = [m for m in members if m.get("temp_id") != temp_id]
+
+    _save_wizard_data(request, token, data)
+
+    return JsonResponse({
+        "ok": True,
+        "card_html": _render_household_form(data, link),
+    })
+
+
+def _render_prescription_card(data: dict, link, temp_id: str) -> str:
+    """Render prescription card for a household member."""
+    medications = _get_prescriptions_for_member(data, temp_id)
+
+    # Get member name
+    if temp_id == "primary":
+        name = data.get("basic_info", {}).get("first_name", "You")
+    else:
+        member = next((m for m in data.get("household_members", []) if m.get("temp_id") == temp_id), None)
+        name = member.get("first_name", "This person") if member else "This person"
+
+    search_url = reverse("drug_search", args=[])
+
+    html = f'<div id="prescription-card-{temp_id}" style="padding:16px;">'
+    html += f'<h3 style="margin:0 0 16px; font-size:15px;"><strong>{name}</strong></h3>'
+
+    # List of medications
+    if medications:
+        html += '<div style="margin-bottom:16px;">'
+        for i, med in enumerate(medications):
+            html += f'''
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--line);">
+              <span style="font-size:14px;">{med.get("drug_name", "Unknown")}</span>
+              <button type="button" class="prescription-remove-btn btn ghost sm" data-temp-id="{temp_id}" data-drug-index="{i}">Remove</button>
+            </div>
+            '''
+        html += '</div>'
+
+    # Drug search widget
+    html += f'''
+    <div class="drug-search-root" data-search-url="{search_url}">
+      <input type="text" name="drug_search" placeholder="Search medication..." style="width:100%; padding:8px; border:1px solid var(--line-2); border-radius:6px; font-size:14px; margin-bottom:8px;" />
+      <div data-search-results style="display:flex; flex-direction:column; gap:4px; max-height:200px; overflow-y:auto;"></div>
+      <input type="hidden" name="selected_drug_id" />
+      <input type="hidden" name="selected_drug_name" />
+      <input type="hidden" name="normalized_drug_name" />
+      <input type="hidden" name="source" />
+    </div>
+
+    <button type="button" class="prescription-add-medication-btn btn outline sm" style="width:100%; margin-top:12px;">Add medication</button>
+
+    <button type="button" class="prescription-done-btn btn brand lg full" style="margin-top:16px;">Done adding medications</button>
+    </div>
+    '''
+
+    return html
+
+
+def _handle_prescription_add(request: HttpRequest, token: str, data: dict, link, body: dict) -> JsonResponse:
+    """Handle adding a medication to a member."""
+    temp_id = body.get("temp_id", "")
+    drug_name = body.get("drug_name", "").strip()
+    drug_id = body.get("drug_id", "")
+    normalized_name = body.get("normalized_name", "")
+    source = body.get("source", "")
+
+    if not drug_name:
+        return JsonResponse({
+            "ok": False,
+            "error": "Please search for and select a medication.",
+        })
+
+    medications = _get_prescriptions_for_member(data, temp_id)
+    medications.append({
+        "drug_name": drug_name,
+        "drug_id": drug_id,
+        "normalized_name": normalized_name,
+        "source": source,
+    })
+    _set_prescriptions_for_member(data, temp_id, medications)
+    _save_wizard_data(request, token, data)
+
+    return JsonResponse({
+        "ok": True,
+        "card_html": _render_prescription_card(data, link, temp_id),
+    })
+
+
+def _handle_prescription_remove(request: HttpRequest, token: str, data: dict, link, body: dict) -> JsonResponse:
+    """Handle removing a medication from a member."""
+    temp_id = body.get("temp_id", "")
+    drug_index = int(body.get("drug_index", -1))
+
+    if drug_index < 0:
+        return JsonResponse({
+            "ok": False,
+            "error": "Invalid medication index.",
+        })
+
+    medications = _get_prescriptions_for_member(data, temp_id)
+    if 0 <= drug_index < len(medications):
+        medications.pop(drug_index)
+
+    _set_prescriptions_for_member(data, temp_id, medications)
+    _save_wizard_data(request, token, data)
+
+    return JsonResponse({
+        "ok": True,
+        "card_html": _render_prescription_card(data, link, temp_id),
+    })

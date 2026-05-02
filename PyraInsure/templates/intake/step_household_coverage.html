@@ -1,43 +1,35 @@
 {% extends "intake/wizard_base.html" %}
 
-{% block step_body %}
-  <p style="margin-bottom: 24px; color: var(--ink-2);">Who needs health coverage?</p>
-
-  <form method="post">
-    {% csrf_token %}
-    <table class="tbl" style="margin-bottom: 24px;">
-      <thead>
-        <tr>
-          <th>Member</th>
-          <th>Needs Coverage?</th>
-          <th>Other Coverage Access?</th>
-          <th>Tobacco User?</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for row in member_rows %}
-          <tr>
-            <td style="font-size: 13px;">{{ row.label }}</td>
-            <td style="font-size: 13px;">{{ row.needs_coverage_field }}</td>
-            <td style="font-size: 13px;">{{ row.other_coverage_access_field }}</td>
-            <td style="font-size: 13px;">{{ row.tobacco_user_field }}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-
-    <div style="padding: 12px 16px; background: var(--surface); border-left: 4px solid var(--teal); border-radius: 0 4px 4px 0; margin-bottom: 24px;">
-      <p style="margin: 0 0 8px 0; font-size: 13px; color: var(--ink-2);">Other coverage access means eligible for coverage through a job, Medicare, Medicaid, or CHIP.</p>
-      <p style="margin: 0; font-size: 13px; color: var(--ink-2);">Tobacco user means used tobacco products 4 or more times per week on average during the past 6 months, not including ceremonial uses.</p>
+{% block chat_messages %}
+  {% for row in member_rows %}
+    <div class="bubble coach">{{ row.label }} — needs health coverage?</div>
+    <div class="choice-btn-group">
+      {% for choice in row.needs_coverage_field %}
+        <label>{{ choice.tag }}<span>{{ choice.choice_label }}</span></label>
+      {% endfor %}
     </div>
 
-    <div class="row between" style="padding-top: 24px;">
-      {% if previous_step %}
-        <button type="submit" name="nav" value="previous" class="btn ghost">← Previous</button>
-      {% else %}
-        <div></div>
-      {% endif %}
-      <button type="submit" name="nav" value="next" class="btn brand">Next</button>
+    <div class="bubble coach" style="font-size:12px; margin-top:4px;">Eligible for other coverage?</div>
+    <div class="choice-btn-group">
+      {% for choice in row.other_coverage_access_field %}
+        <label>{{ choice.tag }}<span>{{ choice.choice_label }}</span></label>
+      {% endfor %}
     </div>
-  </form>
+
+    <div class="bubble coach" style="font-size:12px; margin-top:4px;">Tobacco user?</div>
+    <div class="choice-btn-group">
+      {% for choice in row.tobacco_user_field %}
+        <label>{{ choice.tag }}<span>{{ choice.choice_label }}</span></label>
+      {% endfor %}
+    </div>
+  {% endfor %}
+
+  <div class="bubble coach tint-teal" style="font-size:12px; margin-top:8px;">
+    <p style="margin: 0 0 6px 0;"><strong>Other coverage access:</strong> eligible for coverage through a job, Medicare, Medicaid, or CHIP.</p>
+    <p style="margin: 0;"><strong>Tobacco user:</strong> used tobacco products 4+ times per week average in the past 6 months, not including ceremonial uses.</p>
+  </div>
+{% endblock %}
+
+{% block chat_footer %}
+  {# Form submission buttons rendered by wizard_base #}
 {% endblock %}

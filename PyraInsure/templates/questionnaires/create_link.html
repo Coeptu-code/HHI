@@ -4,167 +4,273 @@
 {% block page_title %}New intake link{% endblock %}
 
 {% block content %}
-  <!-- Step indicator -->
-  <div class="row gap-3" style="justify-content: center; margin-bottom: 32px;">
-    <div class="step-indicator-item" style="display: flex; align-items: center; gap: 12px;">
-      <div class="step-circle" style="width: 32px; height: 32px; border-radius: 50%; background: var(--orange); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">1</div>
+  <div class="row gap-3" style="justify-content: center; margin-bottom: 28px;">
+    <div class="step-indicator-item row gap-2" style="align-items: center;">
+      <div class="step-circle" data-indicator="1" style="width: 32px; height: 32px; border-radius: 50%; background: var(--orange); color: #fff; display:flex; align-items:center; justify-content:center; font-weight:600;">1</div>
       <div style="font-size: 13px; font-weight: 500;">Client</div>
     </div>
-    <div style="width: 40px; height: 1px; background: var(--line); align-self: center;"></div>
-    <div class="step-indicator-item" style="display: flex; align-items: center; gap: 12px;">
-      <div class="step-circle" style="width: 32px; height: 32px; border-radius: 50%; background: var(--line); color: var(--ink-3); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">2</div>
+    <div style="width: 32px; height: 1px; background: var(--line); align-self: center;"></div>
+    <div class="step-indicator-item row gap-2" style="align-items: center;">
+      <div class="step-circle" data-indicator="2" style="width: 32px; height: 32px; border-radius: 50%; background: var(--line); color: var(--ink-3); display:flex; align-items:center; justify-content:center; font-weight:600;">2</div>
       <div style="font-size: 13px; font-weight: 500; color: var(--ink-3);">Customize</div>
     </div>
-    <div style="width: 40px; height: 1px; background: var(--line); align-self: center;"></div>
-    <div class="step-indicator-item" style="display: flex; align-items: center; gap: 12px;">
-      <div class="step-circle" style="width: 32px; height: 32px; border-radius: 50%; background: var(--line); color: var(--ink-3); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">3</div>
+    <div style="width: 32px; height: 1px; background: var(--line); align-self: center;"></div>
+    <div class="step-indicator-item row gap-2" style="align-items: center;">
+      <div class="step-circle" data-indicator="3" style="width: 32px; height: 32px; border-radius: 50%; background: var(--line); color: var(--ink-3); display:flex; align-items:center; justify-content:center; font-weight:600;">3</div>
       <div style="font-size: 13px; font-weight: 500; color: var(--ink-3);">Review</div>
     </div>
   </div>
 
-  <!-- Step 1: Client -->
-  <div data-step="1" class="card card-pad-lg col gap-4">
-    <div>
-      <h2 class="serif" style="margin: 0 0 8px 0; font-size: 20px;">Who is this intake for?</h2>
-      <p class="muted" style="margin: 0;">Create a new client or select an existing one.</p>
-    </div>
-    <label class="field">
-      Client name
-      <input class="input" type="text" placeholder="Jane Doe" data-client-only>
-    </label>
-    <label class="field">
-      Email
-      <input class="input" type="email" placeholder="jane@example.com" data-client-only>
-    </label>
-    <div class="row between" style="padding-top: 8px;">
-      <div></div>
-      <button class="btn brand" type="button" data-next="2">Next →</button>
-    </div>
-  </div>
+  <form method="post" id="create-link-form" class="col gap-4">
+    {% csrf_token %}
 
-  <!-- Step 2: Customize -->
-  <div data-step="2" hidden class="card card-pad-lg col gap-4">
-    <div>
-      <h2 class="serif" style="margin: 0 0 8px 0; font-size: 20px;">Which modules apply?</h2>
-      <p class="muted" style="margin: 0;">Your client will see a blended intake form with all selected modules.</p>
-    </div>
-
-    <form method="post" class="col gap-2">
-      {% csrf_token %}
-
-      {% for field in form %}
-        {% if field.field.widget.input_type == "checkbox" %}
-          <label class="hover-row row between" style="padding: 12px; border-radius: 8px; cursor: pointer; user-select: none;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <svg class="ico" fill="currentColor" viewBox="0 0 24 24" style="color: var(--orange);">
-                {% if field.name == "include_health" %}
-                  <path d="M21 12c0 1.657-.895 3.253-2.457 4.338C17.915 18.646 16.07 19.5 14 19.5c-.823 0-1.61-.163-2.332-.465M7 12h10m0 0c0 1.657-.895 3.253-2.457 4.338C12.915 18.646 11.07 19.5 9 19.5c-2.07 0-3.915-.854-5.543-2.162C1.895 15.253 1 13.657 1 12c0-2.485 1.306-4.666 3.268-5.878"/>
-                {% elif field.name == "include_life" %}
-                  <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-                {% elif field.name == "include_auto" %}
-                  <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
-                {% elif field.name == "include_home" %}
-                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.707.707a1 1 0 001.414-1.414l-7-7z"/>
-                {% elif field.name == "include_umbrella" %}
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm-7-8h14"/>
-                {% endif %}
-              </svg>
-              <div style="flex: 1;">
-                <div style="font-weight: 500;">{{ field.label }}</div>
-              </div>
-            </div>
-            {{ field }}
-          </label>
-        {% endif %}
-      {% endfor %}
-
-      <div class="row between" style="padding-top: 8px;">
-        <button class="btn ghost" type="button" data-back="1">← Back</button>
-        <button class="btn brand" type="button" data-next="3">Next →</button>
+    {% if form.non_field_errors %}
+      <div class="card card-pad-sm" style="border: 1px solid #e57373; background: #fff5f5;">
+        {{ form.non_field_errors }}
       </div>
-    </form>
-  </div>
+    {% endif %}
 
-  <!-- Step 3: Review & Send -->
-  <div data-step="3" hidden class="card card-pad-lg col gap-4">
-    <div>
-      <h2 class="serif" style="margin: 0 0 8px 0; font-size: 20px;">Ready to send?</h2>
-      <p class="muted" style="margin: 0;">Review the selected modules, then send the intake link to your client.</p>
-    </div>
-
-    <div class="card card-pad-sm" style="background: var(--surface);">
-      <div style="font-size: 12px; color: var(--ink-4); margin-bottom: 8px;">Modules</div>
-      <div class="row gap-2" style="flex-wrap: wrap;">
-        {% for field in form %}
-          {% if field.field.widget.input_type == "checkbox" %}
-            <span class="chip outline" data-module="{{ field.name }}" style="display: none;">{{ field.label }}</span>
-          {% endif %}
-        {% endfor %}
+    <div data-step="1" class="card card-pad-lg col gap-4">
+      <div>
+        <h2 class="serif" style="margin:0 0 8px 0; font-size: 20px;">Who is this intake for?</h2>
+        <p class="muted" style="margin:0;">Name and phone are optional. If phone matches an existing client, we'll reuse that record.</p>
       </div>
-    </div>
-
-    <form method="post" class="col gap-4">
-      {% csrf_token %}
-      {% for field in form %}
-        {{ field }}
-      {% endfor %}
+      <label class="field">
+        Client name
+        {{ form.client_name }}
+      </label>
+      <label class="field">
+        Phone
+        {{ form.phone }}
+      </label>
       <div class="row between">
-        <button class="btn ghost" type="button" data-back="2">← Back</button>
-        <button class="btn brand lg" type="submit">Send intake link</button>
+        <div></div>
+        <button type="button" class="btn brand" data-next="2">Next &rarr;</button>
       </div>
-    </form>
-  </div>
+    </div>
+
+    <div data-step="2" hidden class="card card-pad-lg col gap-4">
+      <div>
+        <h2 class="serif" style="margin:0 0 8px 0; font-size: 20px;">Choose and order modules</h2>
+        <p class="muted" style="margin:0;">Drag selected modules to control major intake module order.</p>
+      </div>
+
+      <div class="col gap-2">
+        <label class="hover-row row between" style="padding: 12px; border-radius: 8px;">{{ form.include_health }} <span>Health Intake</span></label>
+        <label class="hover-row row between" style="padding: 12px; border-radius: 8px;">{{ form.include_life }} <span>Life Gap Check</span></label>
+        <label class="hover-row row between" style="padding: 12px; border-radius: 8px;">{{ form.include_auto }} <span>Auto Gap Check</span></label>
+        <label class="hover-row row between" style="padding: 12px; border-radius: 8px;">{{ form.include_home }} <span>Home Gap Check</span></label>
+        <label class="hover-row row between" style="padding: 12px; border-radius: 8px;">{{ form.include_umbrella }} <span>Umbrella Gap Check</span></label>
+      </div>
+
+      {{ form.module_order }}
+
+      <div class="card card-pad-sm" style="background: var(--surface);">
+        <div style="font-size: 12px; color: var(--ink-4); margin-bottom: 10px;">Selected module order (drag to reorder)</div>
+        <ul id="module-order-list" class="col gap-2" style="list-style: none; margin: 0; padding: 0;"></ul>
+      </div>
+
+      <div class="row between">
+        <button type="button" class="btn ghost" data-back="1">&larr; Back</button>
+        <button type="button" class="btn brand" data-next="3">Next &rarr;</button>
+      </div>
+    </div>
+
+    <div data-step="3" hidden class="card card-pad-lg col gap-4">
+      <div>
+        <h2 class="serif" style="margin:0 0 8px 0; font-size: 20px;">Review and create draft link</h2>
+        <p class="muted" style="margin:0;">This creates a draft intake link with customer + module order attached.</p>
+      </div>
+
+      <div class="card card-pad-sm" style="background: var(--surface);">
+        <div style="font-size: 12px; color: var(--ink-4); margin-bottom: 8px;">Module sequence</div>
+        <div id="review-module-order" class="row gap-2" style="flex-wrap: wrap;"></div>
+      </div>
+
+      <div class="row between">
+        <button type="button" class="btn ghost" data-back="2">&larr; Back</button>
+        <button type="submit" class="btn brand lg">Create draft intake link</button>
+      </div>
+    </div>
+  </form>
 
   <script>
-    const steps = document.querySelectorAll('[data-step]');
-    const backBtns = document.querySelectorAll('[data-back]');
-    const nextBtns = document.querySelectorAll('[data-next]');
+    const MODULE_DEFS = [
+      { key: "health", label: "Health Intake", checkbox: "id_include_health" },
+      { key: "life", label: "Life Gap Check", checkbox: "id_include_life" },
+      { key: "auto", label: "Auto Gap Check", checkbox: "id_include_auto" },
+      { key: "home", label: "Home Gap Check", checkbox: "id_include_home" },
+      { key: "umbrella", label: "Umbrella Gap Check", checkbox: "id_include_umbrella" },
+    ];
 
-    nextBtns.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        showStep(parseInt(btn.dataset.next));
+    const steps = document.querySelectorAll("[data-step]");
+    const nextButtons = document.querySelectorAll("[data-next]");
+    const backButtons = document.querySelectorAll("[data-back]");
+    const formElement = document.getElementById("create-link-form");
+    const orderInput = document.getElementById("id_module_order");
+    const orderList = document.getElementById("module-order-list");
+    const reviewOrder = document.getElementById("review-module-order");
+
+    function parseInitialOrder() {
+      try {
+        const parsed = JSON.parse(orderInput.value || "[]");
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    let moduleOrder = parseInitialOrder();
+    if (!moduleOrder.length) {
+      moduleOrder = MODULE_DEFS.map(item => item.key);
+    }
+
+    function selectedModules() {
+      return moduleOrder.filter((key) => {
+        const meta = MODULE_DEFS.find(item => item.key === key);
+        if (!meta) return false;
+        const checkbox = document.getElementById(meta.checkbox);
+        return Boolean(checkbox && checkbox.checked);
+      });
+    }
+
+    function setOrderInput() {
+      orderInput.value = JSON.stringify(selectedModules());
+    }
+
+    function moveKey(key, direction) {
+      const index = moduleOrder.indexOf(key);
+      if (index < 0) return;
+      if (direction === "up" && index > 0) {
+        const previous = moduleOrder[index - 1];
+        moduleOrder[index - 1] = key;
+        moduleOrder[index] = previous;
+      } else if (direction === "down" && index < moduleOrder.length - 1) {
+        const next = moduleOrder[index + 1];
+        moduleOrder[index + 1] = key;
+        moduleOrder[index] = next;
+      } else {
+        return;
+      }
+      renderOrderList();
+    }
+
+    function renderOrderList() {
+      orderList.innerHTML = "";
+      const selected = selectedModules();
+      selected.forEach((key) => {
+        const meta = MODULE_DEFS.find(item => item.key === key);
+        const li = document.createElement("li");
+        li.dataset.key = key;
+        li.draggable = true;
+        li.className = "row between";
+        li.style.padding = "10px 12px";
+        li.style.border = "1px solid var(--line)";
+        li.style.borderRadius = "8px";
+        li.style.cursor = "grab";
+        li.style.background = "white";
+        li.innerHTML = `
+          <span>${meta.label}</span>
+          <span class="row gap-1" style="align-items:center;">
+            <button type="button" data-move="up" data-key="${key}" class="btn ghost sm" style="padding:2px 6px;">&#8593;</button>
+            <button type="button" data-move="down" data-key="${key}" class="btn ghost sm" style="padding:2px 6px;">&#8595;</button>
+            <span style="color: var(--ink-4); margin-left:4px;">&#8597;</span>
+          </span>
+        `;
+        li.addEventListener("dragstart", onDragStart);
+        li.addEventListener("dragover", onDragOver);
+        li.addEventListener("dragenter", onDragEnter);
+        li.addEventListener("drop", onDrop);
+        orderList.appendChild(li);
+      });
+
+      orderList.querySelectorAll("[data-move]").forEach((button) => {
+        button.addEventListener("click", (event) => {
+          const key = event.currentTarget.dataset.key;
+          const direction = event.currentTarget.dataset.move;
+          moveKey(key, direction);
+        });
+      });
+
+      setOrderInput();
+      renderReview();
+    }
+
+    function renderReview() {
+      reviewOrder.innerHTML = "";
+      selectedModules().forEach((key) => {
+        const meta = MODULE_DEFS.find(item => item.key === key);
+        const chip = document.createElement("span");
+        chip.className = "chip outline";
+        chip.textContent = meta.label;
+        reviewOrder.appendChild(chip);
+      });
+    }
+
+    function onDragStart(event) {
+      event.dataTransfer.setData("text/plain", event.currentTarget.dataset.key);
+      event.dataTransfer.effectAllowed = "move";
+    }
+
+    function onDragOver(event) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+    }
+
+    function onDragEnter(event) {
+      event.preventDefault();
+    }
+
+    function onDrop(event) {
+      event.preventDefault();
+      const draggedKey = event.dataTransfer.getData("text/plain");
+      const targetItem = event.target.closest("li[data-key]");
+      const targetKey = targetItem ? targetItem.dataset.key : event.currentTarget.dataset.key;
+      if (!draggedKey || !targetKey || draggedKey === targetKey) return;
+      const fromIdx = moduleOrder.indexOf(draggedKey);
+      const toIdx = moduleOrder.indexOf(targetKey);
+      if (fromIdx < 0 || toIdx < 0) return;
+      moduleOrder.splice(fromIdx, 1);
+      moduleOrder.splice(toIdx, 0, draggedKey);
+      renderOrderList();
+    }
+
+    function showStep(stepNumber) {
+      steps.forEach((step) => {
+        step.hidden = parseInt(step.dataset.step, 10) !== stepNumber;
+      });
+      document.querySelectorAll("[data-indicator]").forEach((indicator) => {
+        const current = parseInt(indicator.dataset.indicator, 10);
+        const active = current <= stepNumber;
+        indicator.style.background = active ? "var(--orange)" : "var(--line)";
+        indicator.style.color = active ? "#fff" : "var(--ink-3)";
+      });
+    }
+
+    nextButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        showStep(parseInt(button.dataset.next, 10));
+      });
+    });
+    backButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        showStep(parseInt(button.dataset.back, 10));
       });
     });
 
-    backBtns.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        showStep(parseInt(btn.dataset.back));
+    MODULE_DEFS.forEach((meta) => {
+      const checkbox = document.getElementById(meta.checkbox);
+      if (!checkbox) return;
+      checkbox.addEventListener("change", () => {
+        renderOrderList();
       });
     });
 
-    function showStep(n) {
-      steps.forEach(s => {
-        s.hidden = parseInt(s.dataset.step) !== n;
-      });
-      updateIndicator(n);
-      updateModuleChips();
-    }
+    formElement.addEventListener("submit", () => {
+      setOrderInput();
+    });
 
-    function updateIndicator(n) {
-      document.querySelectorAll('.step-indicator-item').forEach((item, i) => {
-        const circle = item.querySelector('.step-circle');
-        const isActive = i + 1 <= n;
-        circle.style.background = isActive ? 'var(--orange)' : 'var(--line)';
-        circle.style.color = isActive ? 'white' : 'var(--ink-3)';
-      });
-    }
-
-    function updateModuleChips() {
-      const form = document.querySelector('form');
-      const checkboxes = form.querySelectorAll('input[type="checkbox"]');
-      const chips = document.querySelectorAll('[data-module]');
-
-      chips.forEach(chip => chip.style.display = 'none');
-      checkboxes.forEach(cb => {
-        if (cb.checked) {
-          const chip = document.querySelector(`[data-module="${cb.name}"]`);
-          if (chip) chip.style.display = 'inline-flex';
-        }
-      });
-    }
-
+    renderOrderList();
     showStep(1);
   </script>
 {% endblock %}

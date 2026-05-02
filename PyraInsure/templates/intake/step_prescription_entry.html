@@ -1,20 +1,23 @@
 {% extends "intake/wizard_base.html" %}
 
-{% block step_body %}
-  <p style="margin-bottom: 24px; color: var(--ink-2);">Add prescription medications for {{ member.first_name }} {{ member.last_name }}.</p>
+{% block chat_messages %}
+  <div class="bubble coach">Add prescription medications for {{ member.first_name }} {{ member.last_name }}.</div>
+{% endblock %}
 
-  <div class="card card-pad-sm drug-search-root" data-search-url="{% url 'drug_search' %}" style="background: var(--surface); margin-bottom: 24px;">
+{% block chat_footer %}
+  <div class="card card-pad drug-search-root" data-search-url="{% url 'drug_search' %}" style="margin-bottom:12px;">
+    <h4 style="margin: 0 0 12px 0; font-size:13px; font-weight:600;">Add Medication</h4>
     <form method="post">
       {% csrf_token %}
       <input type="hidden" name="action" value="add_medication" />
       {% if form.non_field_errors %}
-        <div class="card tint-orange card-pad-sm" style="margin-bottom: 16px;">
+        <div class="card tint-orange card-pad-sm" style="margin-bottom: 8px;">
           <small style="color: var(--bad);">{{ form.non_field_errors }}</small>
         </div>
       {% endif %}
       {% for field in form %}
         {% if field.name != "selected_drug_id" and field.name != "selected_drug_name" and field.name != "normalized_drug_name" and field.name != "source" %}
-          <label class="field">
+          <label class="field" style="margin-bottom:10px;">
             {{ field.label }}
             {{ field }}
             {% if field.help_text %}
@@ -29,59 +32,44 @@
         {% endif %}
       {% endfor %}
       <div class="search-results" data-search-results hidden></div>
-      <div class="row between" style="padding-top: 16px; border-top: 1px solid var(--surface-2); margin-top: 16px;">
-        <div></div>
-        <button type="submit" class="btn brand">Add Medication</button>
-      </div>
+      <button type="submit" class="btn brand sm" style="width: 100%; margin-top: 8px;">Add Medication</button>
     </form>
   </div>
 
   {% if medications %}
-    <h3 class="serif" style="margin: 0 0 16px 0; font-size: 14px;">Selected medications</h3>
-    <table class="tbl" style="margin-bottom: 24px;">
-      <thead>
-        <tr>
-          <th>Medication</th>
-          <th>Normalized Name</th>
-          <th>Dosage / Strength</th>
-          <th>Frequency</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for medication in medications %}
+    <div class="card card-pad" style="margin-bottom:12px;">
+      <h4 style="margin: 0 0 12px 0; font-size:13px; font-weight:600;">Selected Medications</h4>
+      <table class="tbl" style="font-size:12px;">
+        <thead>
           <tr>
-            <td style="font-size: 13px;">{{ medication.drug_name }}</td>
-            <td style="font-size: 13px;">{{ medication.normalized_drug_name|default:"-" }}</td>
-            <td style="font-size: 13px;">{{ medication.dosage_strength|default:"-" }}</td>
-            <td style="font-size: 13px;">{{ medication.frequency|default:"-" }}</td>
-            <td style="text-align: right;">
-              <form method="post" style="display: inline;">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="remove_medication" />
-                <input type="hidden" name="remove_index" value="{{ forloop.counter0 }}" />
-                <button type="submit" class="btn sm ghost" style="color: var(--bad);">Remove</button>
-              </form>
-            </td>
+            <th>Name</th>
+            <th>Dosage</th>
+            <th>Frequency</th>
+            <th></th>
           </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <p class="muted" style="margin-bottom: 24px; font-size: 13px;">No medications listed. You can continue if none need to be entered.</p>
-  {% endif %}
-
-  <form method="post">
-    {% csrf_token %}
-    <div class="row between" style="padding-top: 24px;">
-      {% if previous_step %}
-        <button type="submit" name="action" value="previous" class="btn ghost">← Previous</button>
-      {% else %}
-        <div></div>
-      {% endif %}
-      <button type="submit" name="action" value="next" class="btn brand">Next</button>
+        </thead>
+        <tbody>
+          {% for medication in medications %}
+            <tr>
+              <td>{{ medication.drug_name }}</td>
+              <td>{{ medication.dosage_strength|default:"-" }}</td>
+              <td>{{ medication.frequency|default:"-" }}</td>
+              <td style="text-align: right;">
+                <form method="post" style="display: inline;">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="remove_medication" />
+                  <input type="hidden" name="remove_index" value="{{ forloop.counter0 }}" />
+                  <button type="submit" class="btn sm ghost" style="color: var(--bad); padding: 4px 8px;">Remove</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-  </form>
+  {% else %}
+    <p class="muted" style="font-size: 12px;">No medications listed. You can continue if none need to be entered.</p>
+  {% endif %}
 {% endblock %}
 
 {% block extra_scripts %}

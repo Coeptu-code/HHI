@@ -1,0 +1,261 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sign up for PyraInsure</title>
+    <link rel="stylesheet" href="{% static 'css/hifi.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/app.css' %}" />
+  </head>
+  <body class="hifi onboarding-root acc-root" style="height: 100vh; margin: 0;">
+    <div class="aurora a-1"></div>
+    <div class="aurora a-2"></div>
+    <div class="aurora a-3"></div>
+    <div class="grain"></div>
+
+    <a class="corner-logo tl" aria-hidden="true">
+      <img src="{% static 'img/pyrainsure-logo-orange-transparent.png' %}" alt="PyraInsure" />
+    </a>
+    <a class="corner-logo br" aria-hidden="true">
+      <img src="{% static 'img/pyrainsure-mark-orange.png' %}" alt="" />
+    </a>
+
+    <div class="top-row">
+      <div></div>
+      <div class="dots-progress">
+        <span class="d cur" id="dot-0"></span>
+        <span class="d" id="dot-1"></span>
+      </div>
+    </div>
+
+    <div class="step-area acc-step-area">
+      <form method="post" id="signup-form">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}" />
+
+        <!-- Step 1: Basics -->
+        <div class="step-inner active" id="step-0">
+          <div class="acc-card">
+            <div class="acc-eyebrow">Step 1 of 2</div>
+            <h1 class="serif acc-title" style="font-size: 32px; margin: 0 0 4px 0;">Create your account</h1>
+            <p class="acc-sub" style="margin: 0 0 20px 0;">Just a few basics to get started.</p>
+
+            <div class="acc-fields">
+              <label class="acc-field {% if errors.full_name %}has-err{% elif values.full_name %}has-ok{% endif %}">
+                <div class="acc-field-label">
+                  <span>Full name</span>
+                </div>
+                <div class="acc-field-input-wrap">
+                  <input class="acc-field-input" type="text" name="full_name" placeholder="Alex Morgan" value="{{ values.full_name }}" required />
+                  {% if not errors.full_name and values.full_name %}
+                    <svg class="acc-field-tick" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2f8a5b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="m20 6-11 11-5-5"/>
+                    </svg>
+                  {% endif %}
+                </div>
+                {% if errors.full_name %}<div class="acc-field-err">{{ errors.full_name }}</div>{% endif %}
+              </label>
+
+              <label class="acc-field {% if errors.email %}has-err{% elif values.email %}has-ok{% endif %}">
+                <div class="acc-field-label">
+                  <span>Email</span>
+                </div>
+                <div class="acc-field-input-wrap">
+                  <input class="acc-field-input" type="email" name="email" placeholder="alex@example.com" value="{{ values.email }}" required />
+                  {% if not errors.email and values.email %}
+                    <svg class="acc-field-tick" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2f8a5b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="m20 6-11 11-5-5"/>
+                    </svg>
+                  {% endif %}
+                </div>
+                {% if errors.email %}<div class="acc-field-err">{{ errors.email }}</div>{% endif %}
+              </label>
+
+              <label class="acc-field {% if values.phone %}has-ok{% endif %}">
+                <div class="acc-field-label">
+                  <span>Phone</span>
+                  <span class="acc-field-opt">Optional</span>
+                </div>
+                <div class="acc-field-input-wrap">
+                  <input class="acc-field-input" type="tel" name="phone" placeholder="(555) 123-4567" value="{{ values.phone }}" />
+                  {% if values.phone %}
+                    <svg class="acc-field-tick" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2f8a5b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="m20 6-11 11-5-5"/>
+                    </svg>
+                  {% endif %}
+                </div>
+              </label>
+
+              <label class="acc-checkbox">
+                <input type="checkbox" name="marketing" value="1" {% if values.marketing %}checked{% endif %} />
+                <span class="acc-checkbox-box" style="border-color: {% if values.marketing %}var(--orange){% else %}#d8c9b3{% endif %}; background: {% if values.marketing %}var(--orange){% else %}#fff{% endif %};">
+                  {% if values.marketing %}
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="m20 6-11 11-5-5"/>
+                    </svg>
+                  {% endif %}
+                </span>
+                <span class="acc-checkbox-text">Send me coverage tips & product updates</span>
+              </label>
+            </div>
+
+            <div class="acc-actions">
+              <div class="acc-fine">
+                By continuing you agree to PyraInsure's <a href="#" onclick="return false;">Terms</a> &amp; <a href="#" onclick="return false;">Privacy</a>.
+              </div>
+              <button class="cta-btn acc-cta" type="button" onclick="goToStep(1)" style="background: var(--orange);">
+                Continue
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12h14M13 5l7 7-7 7"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="acc-foot">
+              Already have an account? <a href="{% url 'login' %}">Sign in</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Password -->
+        <div class="step-inner" id="step-1">
+          <div class="acc-card">
+            <button class="acc-back" type="button" onclick="goToStep(0)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5M11 5l-7 7 7 7"/>
+              </svg>
+              Back
+            </button>
+
+            <div class="acc-eyebrow">Step 2 of 2</div>
+            <h1 class="serif acc-title" style="font-size: 32px; margin: 0 0 4px 0;">Set a password</h1>
+            <p class="acc-sub" style="margin: 0 0 20px 0;">8+ characters. We'll keep this safe.</p>
+
+            <div class="acc-fields">
+              <label class="acc-field {% if errors.password %}has-err{% elif values.password %}has-ok{% endif %}">
+                <div class="acc-field-label">
+                  <span>Password</span>
+                </div>
+                <div class="acc-field-input-wrap">
+                  <input class="acc-field-input" type="password" name="password" placeholder="At least 8 characters" id="password-input" value="{{ values.password }}" oninput="updateStrength()" required />
+                  {% if not errors.password and values.password %}
+                    <svg class="acc-field-tick" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2f8a5b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="m20 6-11 11-5-5"/>
+                    </svg>
+                  {% endif %}
+                </div>
+                {% if errors.password %}<div class="acc-field-err">{{ errors.password }}</div>{% endif %}
+              </label>
+
+              <div id="strength-meter" style="display: none;">
+                <div class="acc-strength">
+                  <div class="acc-strength-bars">
+                    <div class="acc-strength-bar" id="strength-bar-0"></div>
+                    <div class="acc-strength-bar" id="strength-bar-1"></div>
+                    <div class="acc-strength-bar" id="strength-bar-2"></div>
+                    <div class="acc-strength-bar" id="strength-bar-3"></div>
+                  </div>
+                  <span class="acc-strength-label" id="strength-label" style="color: #c0432f;">Too short</span>
+                </div>
+              </div>
+
+              <label class="acc-field {% if errors.confirm_password %}has-err{% elif values.confirm_password %}has-ok{% endif %}">
+                <div class="acc-field-label">
+                  <span>Confirm password</span>
+                </div>
+                <div class="acc-field-input-wrap">
+                  <input class="acc-field-input" type="password" name="confirm_password" placeholder="Re-enter password" value="{{ values.confirm_password }}" required />
+                  {% if not errors.confirm_password and values.confirm_password %}
+                    <svg class="acc-field-tick" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2f8a5b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="m20 6-11 11-5-5"/>
+                    </svg>
+                  {% endif %}
+                </div>
+                {% if errors.confirm_password %}<div class="acc-field-err">{{ errors.confirm_password }}</div>{% endif %}
+              </label>
+            </div>
+
+            <div class="acc-actions">
+              <div class="acc-fine">
+                Encrypted at rest · HIPAA-compliant infrastructure
+              </div>
+              <button class="cta-btn acc-cta" type="submit" style="background: var(--orange);">
+                Create account
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12h14M13 5l7 7-7 7"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <script>
+      let currentStep = 0;
+
+      function goToStep(step) {
+        const step0 = document.getElementById('step-0');
+        const step1 = document.getElementById('step-1');
+        const dot0 = document.getElementById('dot-0');
+        const dot1 = document.getElementById('dot-1');
+
+        step0.classList.remove('active');
+        step1.classList.remove('active');
+        dot0.classList.remove('cur', 'done');
+        dot1.classList.remove('cur', 'done');
+
+        currentStep = step;
+        if (step === 0) {
+          step0.classList.add('active');
+          dot0.classList.add('cur');
+        } else {
+          step1.classList.add('active');
+          dot1.classList.add('cur');
+          dot0.classList.add('done');
+        }
+      }
+
+      function updateStrength() {
+        const pwd = document.getElementById('password-input').value;
+        const meter = document.getElementById('strength-meter');
+        const label = document.getElementById('strength-label');
+
+        if (pwd.length === 0) {
+          meter.style.display = 'none';
+          return;
+        }
+
+        meter.style.display = 'block';
+
+        let strength = 0;
+        if (pwd.length >= 8) strength++;
+        if (/[A-Z]/.test(pwd)) strength++;
+        if (/\d/.test(pwd)) strength++;
+        if (/[^A-Za-z0-9]/.test(pwd)) strength++;
+
+        const colors = ['#c0432f', '#c47a1a', '#c47a1a', '#2f8a5b', '#2f8a5b'];
+        const labels = ['Too short', 'Weak', 'Fair', 'Good', 'Strong'];
+        const displayStrength = pwd.length >= 8 ? Math.max(1, strength) : 0;
+
+        for (let i = 0; i < 4; i++) {
+          const bar = document.getElementById(`strength-bar-${i}`);
+          bar.style.background = i < displayStrength ? colors[displayStrength] : '#e8ddcd';
+        }
+        label.textContent = labels[displayStrength];
+        label.style.color = colors[displayStrength];
+      }
+
+      document.getElementById('signup-form').addEventListener('submit', function(e) {
+        if (currentStep !== 1) {
+          e.preventDefault();
+        }
+      });
+
+      document.addEventListener('DOMContentLoaded', function() {
+        updateStrength();
+      });
+    </script>
+  </body>
+</html>

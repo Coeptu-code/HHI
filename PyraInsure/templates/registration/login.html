@@ -4,7 +4,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{% block title %}Agent Login — PyraInsure{% endblock %}</title>
+    <title>{% block title %}Sign in to PyraInsure{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/hifi.css' %}" />
     <link rel="stylesheet" href="{% static 'css/app.css' %}" />
   </head>
   <body class="hifi" style="height: 100vh; display: grid; grid-template-columns: 1fr 1fr; margin: 0;">
@@ -27,8 +28,8 @@
           {% endif %}
 
           <label class="field">
-            Email
-            <input class="input" type="email" name="username" placeholder="agent@example.com" autocomplete="username" required>
+            Username
+            <input class="input" type="text" name="username" placeholder="your username" autocomplete="username" required>
             {% if form.username.errors %}
               <small style="color: var(--bad);">{{ form.username.errors.0 }}</small>
             {% endif %}
@@ -44,6 +45,10 @@
 
           <button class="btn brand lg full" type="submit">Sign in</button>
         </form>
+
+        <p style="text-align: center; margin-top: 16px; font-size: 14px; color: var(--ink-3);">
+          New here? <a href="{% url 'signup' %}" style="color: var(--orange); font-weight: 500;">Create an account</a>
+        </p>
       </div>
     </div>
 

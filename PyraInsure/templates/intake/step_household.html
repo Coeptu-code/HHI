@@ -1,112 +1,96 @@
 {% extends "intake/wizard_base.html" %}
 
-{% block step_body %}
-  <p style="margin-bottom: 24px; color: var(--ink-2);">Household includes people who file taxes with you.</p>
+{% block chat_messages %}
+  <div class="bubble coach">Tell me about your household. Include people who file taxes with you.</div>
+{% endblock %}
 
-  <table class="tbl" style="margin-bottom: 24px;">
-    <thead>
-      <tr>
-        <th>Members</th>
-        <th>DOB</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for member in household_members %}
+{% block chat_footer %}
+  <div class="card card-pad" style="margin-bottom:12px;">
+    <h4 style="margin: 0 0 12px 0; font-size:13px; font-weight:600;">Household Members</h4>
+    <table class="tbl" style="margin-bottom: 12px; font-size:12px;">
+      <thead>
         <tr>
-          <td style="font-size: 13px;">
-            {{ member.first_name }} {{ member.last_name }}
-            {% if member.role == "primary" %}
-              (You)
-            {% elif member.role == "spouse" %}
-              (Spouse)
-            {% else %}
-              (Dependent)
-            {% endif %}
-          </td>
-          <td style="font-size: 13px;">{{ member.date_of_birth }}</td>
-          <td style="text-align: right;">
-            {% if member.role != "primary" %}
-              <a class="btn sm ghost" href="{% url 'intake_household_edit' link.token member.temp_id %}">Edit</a>
-              <form method="post" action="{% url 'intake_household_delete' link.token member.temp_id %}" style="display: inline;">
-                {% csrf_token %}
-                <button type="submit" class="btn sm ghost" style="color: var(--bad);">Delete</button>
-              </form>
-            {% endif %}
-          </td>
+          <th>Name</th>
+          <th>DOB</th>
+          <th></th>
         </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        {% for member in household_members %}
+          <tr>
+            <td>
+              {{ member.first_name }} {{ member.last_name }}
+              {% if member.role == "primary" %}
+                (You)
+              {% elif member.role == "spouse" %}
+                (Spouse)
+              {% else %}
+                (Dependent)
+              {% endif %}
+            </td>
+            <td>{{ member.date_of_birth }}</td>
+            <td style="text-align: right;">
+              {% if member.role != "primary" %}
+                <a class="btn sm ghost" href="{% url 'intake_household_edit' link.token member.temp_id %}">Edit</a>
+                <form method="post" action="{% url 'intake_household_delete' link.token member.temp_id %}" style="display: inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn sm ghost" style="color: var(--bad);">Delete</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
 
-  <div class="row gap-2" style="margin-bottom: 24px;">
-    <a class="btn sm ghost" href="{% url 'intake_household_add_spouse' link.token %}">+ Add Spouse</a>
-    <a class="btn sm ghost" href="{% url 'intake_household_add_dependent' link.token %}">+ Add Dependent</a>
+    <div class="row gap-2">
+      <a class="btn sm ghost" href="{% url 'intake_household_add_spouse' link.token %}">+ Spouse</a>
+      <a class="btn sm ghost" href="{% url 'intake_household_add_dependent' link.token %}">+ Dependent</a>
+    </div>
   </div>
 
   {% if helper_texts %}
-    <div style="margin-bottom: 24px; padding: 12px 16px; background: var(--surface); border-left: 4px solid var(--teal); border-radius: 0 4px 4px 0;">
+    <div class="card tint-teal card-pad-sm" style="margin-bottom:12px; font-size:12px;">
       {% for line in helper_texts %}
-        <p style="margin: 0 0 8px 0; font-size: 13px; color: var(--ink-2);">{{ line }}</p>
+        <p style="margin: 0 0 6px 0; color: var(--ink-2);">{{ line }}</p>
       {% endfor %}
     </div>
   {% endif %}
 
   {% if member_form %}
-    <div class="card card-pad-sm" style="margin-bottom: 24px; background: var(--surface);">
-      <h3 class="serif" style="margin: 0 0 16px 0; font-size: 14px;">
+    <div class="card card-pad" style="margin-bottom:12px;">
+      <h4 style="margin: 0 0 12px 0; font-size:13px; font-weight:600;">
         {% if editing_member %}
           Edit {{ member_role|title }}
         {% else %}
           Add {{ member_role|title }}
         {% endif %}
-      </h3>
+      </h4>
       <form method="post" action="{{ member_action_url }}">
         {% csrf_token %}
         {% for field in member_form %}
           {% if field.field.widget.input_type == "checkbox" %}
-            <label class="field" style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <label style="display: flex; gap: 8px; margin-bottom: 10px; align-items: flex-start;">
               {{ field }}
-              <span>{{ field.label }}</span>
-              {% if field.help_text %}
-                <small class="muted" style="display: block; width: 100%;">{{ field.help_text }}</small>
-              {% endif %}
+              <span style="font-size:13px;">{{ field.label }}</span>
             </label>
-            {% if field.errors %}
-              <small style="color: var(--bad);">{{ field.errors.0 }}</small>
-            {% endif %}
           {% else %}
-            <label class="field">
+            <label class="field" style="margin-bottom:10px;">
               {{ field.label }}
               {{ field }}
-              {% if field.help_text %}
-                <small class="muted" style="display: block; margin-top: 4px;">{{ field.help_text }}</small>
-              {% endif %}
-              {% if field.errors %}
-                <small style="color: var(--bad); display: block; margin-top: 4px;">{{ field.errors.0 }}</small>
-              {% endif %}
             </label>
           {% endif %}
+          {% if field.errors %}
+            <small style="color: var(--bad); display: block; margin-bottom: 8px;">{{ field.errors.0 }}</small>
+          {% endif %}
         {% endfor %}
-        <div class="row between" style="padding-top: 16px; border-top: 1px solid var(--surface-2); margin-top: 16px;">
-          <a class="btn ghost" href="{% url 'intake_step' link.token 'household' %}">Cancel</a>
-          <button type="submit" class="btn brand">
-            {% if member_role == "spouse" %}Save Spouse{% else %}Save Dependent{% endif %}
+        <div class="row gap-2" style="margin-top: 12px; border-top: 1px solid var(--line); padding-top: 12px;">
+          <a class="btn ghost sm" href="{% url 'intake_step' link.token 'household' %}">Cancel</a>
+          <button type="submit" class="btn brand sm">
+            {% if member_role == "spouse" %}Save{% else %}Save{% endif %}
           </button>
         </div>
       </form>
     </div>
   {% endif %}
-
-  <form method="post">
-    {% csrf_token %}
-    <div class="row between" style="padding-top: 24px;">
-      {% if previous_step %}
-        <button type="submit" name="nav" value="previous" class="btn ghost">← Previous</button>
-      {% else %}
-        <div></div>
-      {% endif %}
-      <button type="submit" name="nav" value="next" class="btn brand">Next</button>
-    </div>
-  </form>
 {% endblock %}

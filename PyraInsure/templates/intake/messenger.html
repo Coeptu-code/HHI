@@ -1,0 +1,45 @@
+{% extends "intake/public_base.html" %}
+{% load static %}
+
+{% block title %}Chat with Avery{% endblock %}
+
+{% block shell_content %}
+  <div class="chat-header">
+    <div class="avatar md bg-mg">A</div>
+    <div>
+      <div style="font-weight:600;font-size:14px;">Avery</div>
+      <div class="muted" style="font-size:12px;">Your prep coach</div>
+    </div>
+    <div class="grow"></div>
+    <span id="progress-chip" class="chip outline" style="font-size:11px;">—</span>
+  </div>
+
+  <div class="progress" style="border-radius:0;height:3px;">
+    <span id="progress-bar" style="width:0%;"></span>
+  </div>
+
+  <div class="chat-messages" id="chat-messages"></div>
+
+  <div class="quick-replies" id="quick-replies" hidden></div>
+
+  <div class="msg-bar" id="msg-bar">
+    <input id="msg-input" class="msg-input" type="text"
+           placeholder="Type a message…" autocomplete="off" />
+    <button id="msg-send" class="btn brand"
+            style="border-radius:50%;width:40px;height:40px;padding:0;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+      ↑
+    </button>
+  </div>
+
+  <script id="api-meta" type="application/json">
+    {
+      "apiUrl": "{% url 'intake_messenger_api' link.token %}",
+      "submitUrl": "{% url 'intake_submit' link.token %}"
+    }
+  </script>
+{% endblock %}
+
+{% block extra_scripts %}
+  <script src="{% static 'js/drug_search.js' %}"></script>
+  <script src="{% static 'js/messenger.js' %}"></script>
+{% endblock %}

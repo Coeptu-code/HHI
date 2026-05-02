@@ -1,29 +1,53 @@
-{% extends "intake/wizard_base.html" %}
+{% extends "intake/public_base.html" %}
 
-{% block step_body %}
-  <form method="post" action="{% url 'intake_submit' link.token %}">
-    {% csrf_token %}
-    {% if form.non_field_errors %}
-      <div class="card tint-orange card-pad-sm" style="margin-bottom: 16px;">
-        <small style="color: var(--bad);">{{ form.non_field_errors }}</small>
-      </div>
-    {% endif %}
-    {% for field in form %}
-      <label class="field" style="display: flex; gap: 8px; margin-bottom: 16px;">
-        {{ field }}
-        <span style="flex: 1;">{{ field.label }}</span>
-      </label>
-      {% if field.errors %}
-        <small style="color: var(--bad); display: block; margin-bottom: 8px;">{{ field.errors.0 }}</small>
-      {% endif %}
-    {% endfor %}
-    <div class="row between" style="padding-top: 24px;">
-      {% if previous_step %}
-        <a class="btn ghost" href="{% url 'intake_step' link.token previous_step %}">← Previous</a>
-      {% else %}
-        <div></div>
-      {% endif %}
-      <button type="submit" class="btn brand">Submit</button>
+{% block shell_content %}
+  <!-- Header with Avery avatar -->
+  <div class="chat-header">
+    <div class="avatar md bg-mg">A</div>
+    <div>
+      <div style="font-weight:600; font-size:14px;">Avery</div>
+      <div class="muted" style="font-size:12px;">Your prep coach</div>
     </div>
-  </form>
+    <div class="grow"></div>
+    <span class="chip outline" style="font-size:11px;">{{ step_index }}/{{ step_total }}</span>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="progress" style="border-radius:0; height:3px;">
+    <span style="width:{% widthratio step_index step_total 100 %}%;"></span>
+  </div>
+
+  <!-- Chat messages area -->
+  <div class="chat-messages">
+    <div class="bubble coach">One more thing — let's confirm these permissions.</div>
+
+    {% if form.non_field_errors %}
+      <div class="bubble coach" style="color: var(--bad);">{{ form.non_field_errors.0 }}</div>
+    {% endif %}
+  </div>
+
+  <!-- Footer with form submission to intake_submit -->
+  <div class="chat-footer">
+    <form method="post" action="{% url 'intake_submit' link.token %}">
+      {% csrf_token %}
+      <div class="card card-pad" style="margin-bottom:12px;">
+        {% for field in form %}
+          <label style="display: flex; gap: 8px; align-items: flex-start; margin-bottom: 12px;">
+            {{ field }}
+            <span style="flex: 1; font-size:14px; line-height:1.4;">{{ field.label }}</span>
+          </label>
+          {% if field.errors %}
+            <div style="color: var(--bad); font-size:12px; margin-bottom: 8px;">{{ field.errors.0 }}</div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <div class="row gap-2" style="margin-top:12px;">
+        {% if previous_step %}
+          <a href="{% url 'intake_step' link.token previous_step %}" class="btn ghost sm">← Back</a>
+        {% endif %}
+        <button type="submit" class="btn brand lg full">Submit</button>
+      </div>
+    </form>
+  </div>
 {% endblock %}

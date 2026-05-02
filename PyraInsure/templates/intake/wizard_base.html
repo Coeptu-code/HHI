@@ -2,31 +2,39 @@
 
 {% block title %}{{ step_label }}{% endblock %}
 
-{% block header_right %}
-  <span class="chip outline" style="font-size: 11px;">Private session</span>
-{% endblock %}
+{% block shell_content %}
+  <!-- Header with Avery avatar -->
+  <div class="chat-header">
+    <div class="avatar md bg-mg">A</div>
+    <div>
+      <div style="font-weight:600; font-size:14px;">Avery</div>
+      <div class="muted" style="font-size:12px;">Your prep coach</div>
+    </div>
+    <div class="grow"></div>
+    <span class="chip outline" style="font-size:11px;">{{ step_index }}/{{ step_total }}</span>
+  </div>
 
-{% block card_top %}
-  {% if step_total %}
-    <!-- Avery header -->
-    <div class="row gap-3" style="align-items: center; margin-bottom: 16px;">
-      <span class="avatar md bg-mg">A</span>
-      <div>
-        <div style="font-size: 13px; font-weight: 600;">Avery</div>
-        <div class="muted" style="font-size: 12px;">Your prep coach</div>
+  <!-- Progress bar -->
+  <div class="progress" style="border-radius:0; height:3px;">
+    <span style="width:{% widthratio step_index step_total 100 %}%;"></span>
+  </div>
+
+  <!-- Chat message area -->
+  <div class="chat-messages">
+    {% block chat_messages %}{% endblock %}
+  </div>
+
+  <!-- Footer with form submission -->
+  <div class="chat-footer">
+    <form method="post">
+      {% csrf_token %}
+      {% block chat_footer %}{% endblock %}
+      <div class="row gap-2" style="margin-top:12px;">
+        {% if previous_step %}
+          <button name="nav" value="previous" class="btn ghost sm">← Back</button>
+        {% endif %}
+        <button name="nav" value="next" class="btn brand lg full" type="submit">Continue →</button>
       </div>
-    </div>
-
-    <!-- Progress bar -->
-    <div class="progress" style="margin-bottom: 16px;">
-      <span style="width: {% widthratio step_index step_total 100 %}%;"></span>
-    </div>
-
-    <!-- Step label -->
-    <div class="bubble coach" style="margin: 0 0 16px 0;">{{ step_label }}</div>
-  {% endif %}
-{% endblock %}
-
-{% block content %}
-  {% block step_body %}{% endblock %}
+    </form>
+  </div>
 {% endblock %}

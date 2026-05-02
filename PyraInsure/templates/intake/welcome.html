@@ -1,36 +1,320 @@
 {% extends "intake/public_base.html" %}
+{% load static %}
 
-{% block title %}Welcome{% endblock %}
+{% block title %}Welcome to Avery{% endblock %}
 
-{% block header_right %}
-  <span class="chip outline" style="font-size: 11px;">No spam</span>
-{% endblock %}
+{% block shell_content %}
+  <style>
+    /* Override public_base wrapper for full-screen onboarding */
+    .page { display: flex; flex-direction: column; min-height: 100vh; }
+    .shell { display: flex; flex-direction: column; min-height: 100vh; background: none; }
+  </style>
 
-{% block content %}
-  <div class="col gap-4">
-    <!-- Avery intro -->
-    <div class="row gap-3" style="align-items: center; margin-bottom: 8px;">
-      <span class="avatar md bg-mg">A</span>
-      <div>
-        <div style="font-size: 13px; font-weight: 600;">Avery</div>
-        <div class="muted" style="font-size: 12px;">Your prep coach</div>
+  <div class="onboarding-root" style="height: 100vh;">
+    <div class="aurora a-1"></div>
+    <div class="aurora a-2"></div>
+    <div class="aurora a-3"></div>
+    <div class="grain"></div>
+
+    <a class="corner-logo tl" aria-hidden="true">
+      <img src="{% static 'img/pyrainsure-logo-orange-transparent.png' %}" alt="PyraInsure" style="height: 24px;" />
+    </a>
+    <a class="corner-logo br" aria-hidden="true">
+      <img src="{% static 'img/pyrainsure-mark-orange.png' %}" alt="" style="height: 24px;" />
+    </a>
+
+    <div class="top-row">
+      <div></div>
+      <div class="dots-progress">
+        <span class="d cur" id="dot-0"></span>
+        <span class="d" id="dot-1"></span>
+        <span class="d" id="dot-2"></span>
+        <span class="d" id="dot-3"></span>
+        <span class="d" id="dot-4"></span>
       </div>
     </div>
 
-    <!-- Welcome message -->
-    <div class="bubble coach">
-      <p style="margin: 0;">Hi there! Let's get you set up. I'll ask a few questions to prepare your agent for your call.</p>
-      <p style="margin: 0;">You can skip any question, and there are no wrong answers — just answer honestly.</p>
+    <div class="step-area">
+      <!-- Step 1: Welcome -->
+      <div class="step-inner active" id="step-0">
+        <div class="step-stack">
+          <div class="big-mark">
+            <div class="big-mark-ring"></div>
+            <div class="big-mark-inner" style="background: var(--orange);">
+              <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <path d="m9 12 2 2 4-4"/>
+              </svg>
+            </div>
+          </div>
+          <h1 class="serif step-title" style="color: var(--ink);">Welcome to <span style="color: var(--orange);">PyraInsure</span></h1>
+          <p class="step-sub">Your agent has assigned a guided intake to help prepare for your meeting.</p>
+        </div>
+      </div>
+
+      <!-- Step 2: Meet Avery -->
+      <div class="step-inner" id="step-1">
+        <div class="step-stack">
+          <div class="avery-wrap">
+            <div class="avery-ring"></div>
+            <div class="avery-pulse"></div>
+            <div class="avery-avatar" style="background: linear-gradient(135deg, var(--orange)cc 0%, var(--orange) 50%, #c2552c 100%);">A</div>
+            <div class="avery-status"></div>
+          </div>
+          <h2 class="serif step-title">Meet Avery</h2>
+          <p class="step-sub">Your guided intake specialist. I'll ask a few personal questions so your agent can prepare for your meeting and spot gaps in your coverage.</p>
+          <div class="bubble-row">
+            <div class="mini-bubble">Hi there 👋</div>
+            <div class="mini-bubble" style="background: #1d1a16; color: #fff; border-color: #1d1a16; border-bottom-right-radius: 4px; border-bottom-left-radius: 18px;">Ready when you are.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: What to expect -->
+      <div class="step-inner" id="step-2">
+        <div class="step-stack">
+          <h2 class="serif step-title">Here's what to expect</h2>
+          <p class="step-sub">About <strong>6 minutes</strong>. You can pause anytime.</p>
+          <div class="process-list">
+            <div class="process-row">
+              <div class="process-num" style="border-color: var(--orange); color: var(--orange);">01</div>
+              <div class="process-ico" style="color: var(--orange);">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </div>
+              <div class="process-text">
+                <div class="process-label">Tell me about you</div>
+                <div class="process-sub">Quick questions about your life today</div>
+              </div>
+            </div>
+            <div class="process-row">
+              <div class="process-num" style="border-color: var(--orange); color: var(--orange);">02</div>
+              <div class="process-ico" style="color: var(--orange);">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+              </div>
+              <div class="process-text">
+                <div class="process-label">Cover the basics</div>
+                <div class="process-sub">Health, life, home, auto coverage</div>
+              </div>
+            </div>
+            <div class="process-row">
+              <div class="process-num" style="border-color: var(--orange); color: var(--orange);">03</div>
+              <div class="process-ico" style="color: var(--orange);">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/>
+                </svg>
+              </div>
+              <div class="process-text">
+                <div class="process-label">Spot the gaps</div>
+                <div class="process-sub">I summarize for your agent</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Privacy -->
+      <div class="step-inner" id="step-3">
+        <div class="step-stack">
+          <div class="lock-mark">
+            <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--orange)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <h2 class="serif step-title">Your privacy, protected</h2>
+          <p class="step-sub">HIPAA-compliant infrastructure. You control your data.</p>
+          <div class="privacy-list">
+            <div class="privacy-row">
+              <div class="privacy-check" style="background: #d9ecdf; color: #2f8a5b;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m20 6-11 11-5-5"/>
+                </svg>
+              </div>
+              <div>
+                <div class="privacy-k">Encrypted in transit & at rest</div>
+                <div class="privacy-v">AES-256 / TLS 1.3</div>
+              </div>
+            </div>
+            <div class="privacy-row">
+              <div class="privacy-check" style="background: #d9ecdf; color: #2f8a5b;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m20 6-11 11-5-5"/>
+                </svg>
+              </div>
+              <div>
+                <div class="privacy-k">Only your agent sees your answers</div>
+                <div class="privacy-v">Plus you, of course</div>
+              </div>
+            </div>
+            <div class="privacy-row">
+              <div class="privacy-check" style="background: #d9ecdf; color: #2f8a5b;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m20 6-11 11-5-5"/>
+                </svg>
+              </div>
+              <div>
+                <div class="privacy-k">You can delete anytime</div>
+                <div class="privacy-v">Right from your dashboard</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: Consent -->
+      <div class="step-inner" id="step-4">
+        <div class="step-stack" style="text-align: left; align-items: stretch;">
+          <h2 class="serif step-title" style="text-align: center;">Let's get started</h2>
+          <form id="welcome-form" method="post" style="width: 100%; max-width: 440px; margin: 0 auto;">
+            {% csrf_token %}
+
+            <div class="consent-item">
+              <label>
+                <input type="checkbox" name="consent_terms" value="1" required />
+                <span>I agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy</strong></span>
+              </label>
+            </div>
+
+            <div class="consent-item">
+              <label>
+                <input type="checkbox" name="consent_contact" value="1" />
+                <span>I'm okay being contacted by licensed agents</span>
+              </label>
+            </div>
+
+            <div class="consent-item">
+              <label>
+                <input type="checkbox" name="consent_referral_sharing" value="1" />
+                <span>My info can be shared with partner agents for other coverage needs</span>
+              </label>
+            </div>
+
+            <button type="submit" class="cta-btn" style="width: 100%; margin-top: 20px; background: var(--orange); font-size: 15px; padding: 14px;" disabled id="submit-btn">
+              I agree, let's begin
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M13 5l7 7-7 7"/>
+              </svg>
+            </button>
+          </form>
+
+          <p class="cta-fine" style="text-align: center; margin-top: 16px;">
+            Your info is only used to prepare for your conversation.
+          </p>
+        </div>
+      </div>
     </div>
 
-    <!-- Info card -->
-    <div class="card card-pad-sm" style="border-left: 4px solid var(--teal);">
-      <p style="margin: 0; font-size: 13px; line-height: 1.5; color: var(--ink-2);">
-        This intake helps prepare for your call. We provide health insurance guidance and (with your consent) connect you with partner agents for other coverage needs.
-      </p>
-    </div>
+    <!-- Desktop nav arrows -->
+    <button class="nav-arrow left" id="nav-prev" aria-label="Previous" style="display: none;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 12H5M11 5l-7 7 7 7"/>
+      </svg>
+    </button>
+    <button class="nav-arrow right" id="nav-next" aria-label="Next">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12h14M13 5l7 7-7 7"/>
+      </svg>
+    </button>
 
-    <!-- CTA -->
-    <a class="btn brand lg full" href="{{ start_url }}">Let's go →</a>
+    <!-- Mobile swipe hint -->
+    <div class="swipe-hint" id="swipe-hint" style="display: none;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12h14M13 5l7 7-7 7"/>
+      </svg>
+      <span>Swipe to continue</span>
+    </div>
   </div>
+
+  <script>
+    let currentStep = 0;
+    let isMobile = window.innerWidth < 768;
+    const TOTAL_STEPS = 5;
+
+    function updateUI() {
+      // Hide all steps
+      for (let i = 0; i < TOTAL_STEPS; i++) {
+        const el = document.getElementById(`step-${i}`);
+        el.classList.remove('active');
+      }
+
+      // Show current step
+      document.getElementById(`step-${currentStep}`).classList.add('active');
+
+      // Update dots
+      for (let i = 0; i < TOTAL_STEPS; i++) {
+        const dot = document.getElementById(`dot-${i}`);
+        dot.classList.remove('cur', 'done');
+        if (i < currentStep) dot.classList.add('done');
+        if (i === currentStep) dot.classList.add('cur');
+      }
+
+      // Update nav buttons
+      document.getElementById('nav-prev').style.display = currentStep === 0 ? 'none' : 'flex';
+      document.getElementById('nav-prev').classList.toggle('disabled', currentStep === 0);
+
+      // Show swipe hint on first step only
+      document.getElementById('swipe-hint').style.display = currentStep === 0 && isMobile ? 'flex' : 'none';
+
+      // Update submit button state (step 4)
+      if (currentStep === 4) {
+        updateSubmitButton();
+      }
+    }
+
+    function goNext() {
+      if (currentStep < TOTAL_STEPS - 1) {
+        currentStep++;
+        updateUI();
+      }
+    }
+
+    function goPrev() {
+      if (currentStep > 0) {
+        currentStep--;
+        updateUI();
+      }
+    }
+
+    function updateSubmitButton() {
+      const checkbox = document.querySelector('[name="consent_terms"]');
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = !checkbox.checked;
+    }
+
+    // Event listeners
+    document.getElementById('nav-prev').addEventListener('click', goPrev);
+    document.getElementById('nav-next').addEventListener('click', goNext);
+    document.querySelector('[name="consent_terms"]').addEventListener('change', updateSubmitButton);
+
+    // Keyboard
+    window.addEventListener('keydown', (e) => {
+      if (!isMobile) {
+        if (e.key === 'ArrowRight') goNext();
+        if (e.key === 'ArrowLeft') goPrev();
+      }
+    });
+
+    // Touch swipe
+    if (isMobile) {
+      let startX = 0;
+      const root = document.querySelector('.onboarding-root');
+      root.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+      }, { passive: true });
+      root.addEventListener('touchend', (e) => {
+        const dx = e.changedTouches[0].clientX - startX;
+        if (Math.abs(dx) > 40) {
+          if (dx < 0) goNext();
+          else goPrev();
+        }
+      }, { passive: true });
+    }
+
+    // Initial setup
+    updateUI();
+  </script>
 {% endblock %}

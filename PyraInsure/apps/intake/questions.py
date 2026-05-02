@@ -87,6 +87,20 @@ QUESTION_BANK: tuple[Question, ...] = (
         position=40,
     ),
     Question(
+        key="street_address",
+        text="Street address",
+        required=False,
+        supports=("basic",),
+        position=45,
+    ),
+    Question(
+        key="zip_code",
+        text="ZIP code",
+        required=False,
+        supports=("basic",),
+        position=48,
+    ),
+    Question(
         key="state",
         text="State",
         required=False,
@@ -245,7 +259,8 @@ QUESTION_BANK: tuple[Question, ...] = (
             ("unknown", "Not sure"),
             ("state_minimum", "State minimum"),
             ("low", "Low"),
-            ("adequate", "Adequate / High"),
+            ("standard", "Standard"),
+            ("high", "High"),
         ),
         position=430,
     ),
@@ -351,12 +366,20 @@ CONSENT_FIELDS = (
 
 
 def get_visible_steps(selected_modules: Iterable[str]) -> list[str]:
-    selected = {module.strip().lower() for module in selected_modules if module and module.strip()}
+    ordered_modules: list[str] = []
+    for module in selected_modules:
+        normalized = module.strip().lower() if module else ""
+        if normalized not in MODULE_STEP_MAP:
+            continue
+        if normalized in ordered_modules:
+            continue
+        ordered_modules.append(normalized)
+
     steps = ["basic", "household"]
-    if "health" in selected:
-        steps.extend(["health", "household_coverage", "prescription_check"])
-    for module in ("life", "auto", "home", "umbrella"):
-        if module in selected:
+    for module in ordered_modules:
+        if module == "health":
+            steps.extend(["health", "household_coverage", "prescription_check"])
+        else:
             steps.append(MODULE_STEP_MAP[module])
     steps.append("consent")
     return steps

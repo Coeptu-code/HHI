@@ -181,11 +181,14 @@ def score_and_persist(submission: IntakeSubmission, answers: dict[str, Any]) -> 
         return GapFinding.objects.create(
             submission=submission,
             customer=submission.customer,
+            finding_type=category,
             category=category,
             severity=severity,
             points=points,
             title=title,
             description=description,
+            explanation=description,
+            status="open",
             assigned_to=assigned_to,
         )
 

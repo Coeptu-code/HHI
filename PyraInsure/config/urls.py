@@ -21,10 +21,11 @@ from django.views.generic import RedirectView
 
 urlpatterns = [
     path("", RedirectView.as_view(pattern_name="dashboard", permanent=False)),
-    path("admin/", admin.site.urls),
     path("", include("apps.accounts.urls")),
     path("", include("apps.agents.urls")),
     path("", include("apps.questionnaires.urls")),
     path("", include("apps.intake.urls")),
+    path("", include("apps.gap_scoring.urls")),
     path("", include("apps.customers.urls")),
+    path("admin/", admin.site.urls),
 ]

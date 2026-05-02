@@ -1,34 +1,16 @@
 {% extends "intake/wizard_base.html" %}
 
-{% block step_body %}
-  <p style="margin-bottom: 24px; color: var(--ink-2);">Does anyone in your household take prescription medications?</p>
-
-  <form method="post">
-    {% csrf_token %}
-    <table class="tbl" style="margin-bottom: 24px;">
-      <thead>
-        <tr>
-          <th>Member</th>
-          <th>Takes Prescriptions?</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for row in member_rows %}
-          <tr>
-            <td style="font-size: 13px;">{{ row.label }}</td>
-            <td style="font-size: 13px;">{{ row.field }}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-
-    <div class="row between" style="padding-top: 24px;">
-      {% if previous_step %}
-        <button type="submit" name="nav" value="previous" class="btn ghost">← Previous</button>
-      {% else %}
-        <div></div>
-      {% endif %}
-      <button type="submit" name="nav" value="next" class="btn brand">Next</button>
+{% block chat_messages %}
+  {% for row in member_rows %}
+    <div class="bubble coach">{{ row.label }} — takes prescriptions?</div>
+    <div class="choice-btn-group">
+      {% for choice in row.field %}
+        <label>{{ choice.tag }}<span>{{ choice.choice_label }}</span></label>
+      {% endfor %}
     </div>
-  </form>
+  {% endfor %}
+{% endblock %}
+
+{% block chat_footer %}
+  {# Form submission buttons rendered by wizard_base #}
 {% endblock %}

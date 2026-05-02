@@ -4,7 +4,7 @@
 {% block page_title %}Customers{% endblock %}
 
 {% block content %}
-  {% if customers %}
+  {% if customer_rows %}
     <div class="card card-pad">
       <table class="tbl" style="width: 100%;">
         <thead>
@@ -14,23 +14,29 @@
             <th>Phone</th>
             <th>State</th>
             <th>Last submission</th>
+            <th>Gap score</th>
+            <th>Health gaps</th>
+            <th>Referral gaps</th>
+            <th>Status</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
-          {% for customer in customers %}
-            {% with last_submission=customer.intakesubmission_set.first %}
-              <tr>
-                <td style="font-size: 13px;">{{ customer.first_name }} {{ customer.last_name }}</td>
-                <td style="font-size: 13px;">{{ customer.email|default:"-" }}</td>
-                <td style="font-size: 13px;">{{ customer.phone|default:"-" }}</td>
-                <td style="font-size: 13px;">{{ customer.state|default:"-" }}</td>
-                <td style="font-size: 13px;">{% if last_submission %}{{ last_submission.created_at|date:"M j, Y" }}{% else %}-{% endif %}</td>
-                <td style="text-align: right;">
-                  <a href="{% url 'customer_detail' customer.id %}" class="btn sm outline">View</a>
-                </td>
-              </tr>
-            {% endwith %}
+          {% for row in customer_rows %}
+            <tr>
+              <td style="font-size: 13px;">{{ row.full_name }}</td>
+              <td style="font-size: 13px;">{{ row.email|default:"-" }}</td>
+              <td style="font-size: 13px;">{{ row.phone|default:"-" }}</td>
+              <td style="font-size: 13px;">{{ row.state|default:"-" }}</td>
+              <td style="font-size: 13px;">{{ row.last_submission_at|default:"-" }}</td>
+              <td style="font-size: 13px;">{{ row.gap_score|floatformat:0 }}</td>
+              <td style="font-size: 13px;">{{ row.health_gap_count }}</td>
+              <td style="font-size: 13px;">{{ row.referral_gap_count }}</td>
+              <td style="font-size: 13px;">{{ row.status|title }}</td>
+              <td style="text-align: right;">
+                <a href="{% url 'customer_detail' row.id %}" class="btn sm outline">View</a>
+              </td>
+            </tr>
           {% endfor %}
         </tbody>
       </table>
